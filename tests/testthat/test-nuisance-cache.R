@@ -11,8 +11,7 @@
 #'   (iii) a fingerprint mismatch is a hard error, never a silent misalignment,
 #'   (iv)  fits are RNG-neutral to the caller's stream,
 #'   (v)   passing a cache with a thresholded estimator errors,
-#'   (vi)  in-place nuisance mutation (TMLE targeting) cannot corrupt the cache,
-#'   (vii) fit counts scale as O(P) + O(P x cost types), not O(P x CT x deltas).
+#'   (vi)  fit counts scale as O(P) + O(P x cost types), not O(P x CT x deltas).
 
 context("Nuisance-fit cache")
 
@@ -335,42 +334,6 @@ test_that("cached runs are RNG-neutral to the caller's stream", {
   invisible(run_cache_test_estimate(d, delta, "ct1", cache))
   expect_identical(.Random.seed, seed_before2)
   expect_identical(runif(5), reference_draws)
-})
-
-# ============================================================================
-# (vi) In-place nuisance mutation cannot corrupt the cache (TMLE)
-# ============================================================================
-
-test_that("TMLE targeting and feasibility subsetting leave cached matrices intact", {
-  d <- make_cache_test_data()
-  cache <- new_nuisance_cache(9090L, tags = d$cost_types)
-
-  res1 <- run_cache_test_estimate(d, rep(1.1, 6), "ct1", cache, estimator = "tmle")
-
-  # Deep copies (value comparison, not identity) of every cached matrix.
-  snap_ps <- lapply(cache$ps, function(e) e$value + 0)
-  snap_out <- lapply(cache$outcome[["ct1"]], function(e) e$value + 0)
-  expect_true(length(snap_ps) > 0 && length(snap_out) > 0)
-
-  # A second TMLE run at a different delta re-uses the same cached objects; the
-  # TMLE targeting step assigns into a local copy, so the cache must be unchanged.
-  res2 <- run_cache_test_estimate(d, rep(1.2, 6), "ct1", cache, estimator = "tmle")
-
-  for (k in names(snap_ps)) {
-    expect_identical(cache$ps[[k]]$value, snap_ps[[k]])
-  }
-  for (k in names(snap_out)) {
-    expect_identical(cache$outcome[["ct1"]][[k]]$value, snap_out[[k]])
-  }
-
-  # And the second run's numbers match a fresh-cache TMLE run at the same delta:
-  # if run 1 had corrupted the cached inputs, these would differ.
-  cache_fresh <- new_nuisance_cache(9090L, tags = d$cost_types)
-  res2_fresh <- run_cache_test_estimate(d, rep(1.2, 6), "ct1", cache_fresh,
-                                        estimator = "tmle")
-  expect_identical(res2$estimate, res2_fresh$estimate)
-  expect_identical(res2$eif_values, res2_fresh$eif_values)
-  expect_false(isTRUE(all.equal(res1$estimate, res2$estimate, tolerance = 1e-12)))
 })
 
 # ============================================================================

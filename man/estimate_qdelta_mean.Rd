@@ -80,9 +80,8 @@ Default: NULL.}
 
 \item{estimator}{Character, final estimator type.
 Options: "one_step" (recommended, EIF-based, the estimator analyzed in the
-paper's Theorem 1), "tmle" (EXPERIMENTAL -- targeting step implemented but
-no supporting theory; not analyzed in the paper), "plugin" (deprecated, no
-EIF correction). Default: "one_step".}
+paper's Theorem 1) or "plugin" (deprecated, no EIF correction).
+Default: "one_step".}
 
 \item{cross_fit}{Logical, use cross-fitting for sample splitting to reduce
 bias. Recommended for small samples or flexible nuisance estimation.
@@ -181,15 +180,14 @@ List containing:
 This is the primary user-facing function that estimates \code{E[Y^{Q_delta}]}, the
 counterfactual mean under the incremental intervention distribution Q_delta.
 Implements cross-fitted one-step estimation based on the efficient influence
-function (EIF), the estimator analyzed in the accompanying paper. Also
-supports an experimental TMLE-style estimator with no supporting theory.
+function (EIF), the estimator analyzed in the accompanying paper.
 }
 \details{
 The function implements the estimation procedure described in the paper:
 \enumerate{
 \item Estimates nuisance functions: propensity scores P(A|X) and outcome models \code{E[Y|A,X]}
 \item For each observation, solves for Q_delta distribution using constrained optimization
-\item Computes the one-step estimate from the EIF (or the experimental TMLE-style estimator)
+\item Computes the one-step estimate from the EIF
 \item Provides valid inference via influence function variance or bootstrap
 }
 

@@ -82,7 +82,7 @@ cache_test_dataset <- function(d, cost_type = d$cost_types[1]) {
 #' @param cost_type Which synthetic cost type to estimate.
 #' @param cache Optional nuisance cache.
 #' @param tag Cache tag (defaults to cost_type when a cache is supplied).
-#' @param estimator "one_step" or "tmle".
+#' @param estimator "one_step" (or "plugin"; see estimate_qdelta_mean()).
 #' @param ... Passed to estimate_qdelta_mean_stratified().
 run_cache_test_estimate <- function(d, delta, cost_type = d$cost_types[1],
                                     cache = NULL, tag = cost_type,

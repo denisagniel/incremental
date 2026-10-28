@@ -22,10 +22,6 @@ Vector incremental treatment effects extend the concept of incremental propensit
 
 The paper also derives bounds on $\psi(\bdelta)$ under a bounded counterfactual risk-ratio model for violations of ignorability (Proposition on sensitivity bounds, with EIF-based estimators for the bounds). **This sensitivity-bounds machinery is not yet implemented in the package** -- only the delta-sweep functions described above are. If you need the risk-ratio bounds, they must currently be implemented by hand from the paper's formulas.
 
-### Experimental
-
-An `estimator = "tmle"` option is implemented in `estimate_qdelta_mean()` but is **not covered by the accompanying paper's theory** -- no asymptotic normality or efficiency result is established for it, and the function emits a warning when used. Its targeting step fluctuates only the outcome model, while the estimand also depends on the propensity score through the divergence tilt, so it is not solving the full efficient score. Use `estimator = "one_step"` for any inference you intend to report; the `"tmle"` path is provided for exploration only.
-
 ## Installation
 
 ```r
@@ -124,7 +120,7 @@ sens_result <- sensitivity_analysis(sim_data$data, delta_grid, treatment_cols = 
 ### Core Functions
 
 - **`estimate_qdelta_mean()`**: Primary user-facing function for estimation and inference
-- **`compute_psi_delta()`**: Internal workhorse implementing outcome-regression, IPW, and EIF-based ("doubly_robust", a legacy name -- see Experimental/robustness notes above) point estimates; usually called via `estimate_qdelta_mean()`
+- **`compute_psi_delta()`**: Internal workhorse implementing outcome-regression, IPW, and EIF-based ("doubly_robust", a legacy name -- see the robustness note under Key Features above) point estimates; usually called via `estimate_qdelta_mean()`
 - **`efficient_influence_function()`** / **`efficient_influence_function_active()`**: Efficient influence function computation
 - **`compute_h_function_value()`** / internal `divergence_h_pair()` (`R/divergence_h_functions.R`): the four divergence-tilt functions (KL, reverse KL, chi-squared, Hellinger) and their derivatives, dispatched by the `divergence` argument. There is no separate `kl_divergence_qdelta()` / `f_divergence_qdelta()`-style function per divergence -- all four are handled by this single dispatcher.
 

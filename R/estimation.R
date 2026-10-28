@@ -4,7 +4,6 @@
 #' Main estimation functions for computing psi_delta = `E[Y^{Q_delta}]`, the
 #' counterfactual mean under incremental interventions. Implements outcome
 #' regression, IPW, and one-step (EIF-based) estimators with full inference.
-#' Also includes an experimental TMLE-style estimator with no supporting theory.
 #' @author Denis Agniel
 
 #' Compute h function value for divergence-based tilt
@@ -281,105 +280,13 @@ compute_psi_delta <- function(data, delta, treatment_cols, covariate_cols,
   return(psi_est)
 }
 
-#' Target outcome model for TMLE
-#'
-#' Performs the TMLE targeting step by updating the outcome model using a
-#' parametric submodel. The clever covariate is computed from the EIF components.
-#'
-#' @param data tibble, observed data
-#' @param outcome_means Matrix, initial outcome means (n × 2^m)
-#' @param propensity_scores Matrix, propensity scores (n × 2^m)
-#' @param qdelta_results List, per-observation Q_delta results
-#' @param vectors Matrix, treatment combinations (2^m × m)
-#' @param treatment_cols Character vector of treatment column names.
-#' @param outcome_col Character scalar, outcome column name. Default "Y".
-#' @param divergence Character, divergence type
-#' @return Matrix, targeted outcome means (n × 2^m)
-#' @keywords internal
-target_outcome_model_tmle <- function(data, outcome_means, propensity_scores,
-                                     qdelta_results, vectors, treatment_cols,
-                                     outcome_col = "Y", divergence = "kl") {
-
-  n <- nrow(data)
-  n_combinations <- nrow(vectors)
-  m <- ncol(vectors)
-
-  # Extract treatment assignments (explicit column specifications)
-  A_matrix <- as.matrix(data[, treatment_cols, drop = FALSE])
-  Y_vector <- data[[outcome_col]]
-
-  # Initialize targeted outcome means
-  targeted_outcome_means <- outcome_means
-
-  # For each treatment combination, perform targeting
-  for (a_idx in 1:n_combinations) {
-    a <- vectors[a_idx, ]
-
-    # Find observations with this treatment combination (vectorized)
-    match_rows <- rowSums(A_matrix == matrix(rep(a, each = n), nrow = n, ncol = m)) == m
-
-    if (sum(match_rows) < 2) {
-      # Too few observations, skip targeting for this combination
-      next
-    }
-
-    # Compute clever covariate for this treatment combination
-    # The clever covariate H(a, X) is h(a, λ) for each observation (vectorized)
-    clever_covariate <- numeric(n)
-    for (i in 1:n) {
-      lambda_i <- qdelta_results[[i]]$lambda
-      clever_covariate[i] <- compute_h_function_value(a, lambda_i, divergence)
-    }
-
-    # Parametric submodel: μ*_a(X) = μ_a(X) + ε · H(a, X)
-    # Fit GLM with offset = μ_a(X) and covariate = H(a, X)
-    # Only use observations with this treatment combination
-    mu_a_initial <- outcome_means[match_rows, a_idx]
-    H_a <- clever_covariate[match_rows]
-    Y_a <- Y_vector[match_rows]
-
-    # Fit targeting model: Y = offset(mu_a) + epsilon * H_a
-    # Use glm with offset
-    targeting_data <- data.frame(
-      Y = Y_a,
-      H = H_a,
-      offset = mu_a_initial
-    )
-
-    # Fit model: Y ~ offset(mu_a) + epsilon * H
-    # This is equivalent to: Y - mu_a = epsilon * H
-    tryCatch({
-      targeting_model <- glm(Y ~ 0 + H + offset(offset),
-                            data = targeting_data,
-                            family = gaussian())
-
-      epsilon <- coef(targeting_model)["H"]
-      if (is.na(epsilon)) {
-        epsilon <- 0
-      }
-
-      # Update outcome means for all observations (not just those with A=a)
-      # μ*_a(X) = μ_a(X) + ε · H(a, X)
-      targeted_outcome_means[, a_idx] <- outcome_means[, a_idx] + epsilon * clever_covariate
-
-    }, error = function(e) {
-      # If targeting fails, keep original outcome means
-      warning("TMLE targeting failed for treatment combination ", a_idx,
-              ": ", e$message, ". Using initial outcome model.")
-    })
-  }
-
-  return(targeted_outcome_means)
-}
-
 #' Estimate counterfactual mean under incremental intervention distribution
 #'
 #' @description
 #' This is the primary user-facing function that estimates `E[Y^{Q_delta}]`, the
 #' counterfactual mean under the incremental intervention distribution Q_delta.
 #' Implements cross-fitted one-step estimation based on the efficient influence
-#' function (EIF), the estimator analyzed in the accompanying paper. Also
-#' supports an experimental TMLE-style estimator with no supporting theory.
+#' function (EIF), the estimator analyzed in the accompanying paper.
 #'
 #' @param data Data frame or tibble with columns:
 #'   - Treatment columns named A1, A2, ..., Am (binary 0/1)
@@ -412,9 +319,8 @@ target_outcome_model_tmle <- function(data, outcome_means, propensity_scores,
 #'   Default: NULL.
 #' @param estimator Character, final estimator type.
 #'   Options: "one_step" (recommended, EIF-based, the estimator analyzed in the
-#'   paper's Theorem 1), "tmle" (EXPERIMENTAL -- targeting step implemented but
-#'   no supporting theory; not analyzed in the paper), "plugin" (deprecated, no
-#'   EIF correction). Default: "one_step".
+#'   paper's Theorem 1) or "plugin" (deprecated, no EIF correction).
+#'   Default: "one_step".
 #' @param cross_fit Logical, use cross-fitting for sample splitting to reduce
 #'   bias. Recommended for small samples or flexible nuisance estimation.
 #'   Default: FALSE.
@@ -497,7 +403,7 @@ target_outcome_model_tmle <- function(data, outcome_means, propensity_scores,
 #' The function implements the estimation procedure described in the paper:
 #' 1. Estimates nuisance functions: propensity scores P(A|X) and outcome models `E[Y|A,X]`
 #' 2. For each observation, solves for Q_delta distribution using constrained optimization
-#' 3. Computes the one-step estimate from the EIF (or the experimental TMLE-style estimator)
+#' 3. Computes the one-step estimate from the EIF
 #' 4. Provides valid inference via influence function variance or bootstrap
 #'
 #' **Threshold types (handling boundary propensities):**
@@ -1076,69 +982,8 @@ Results will be based on %d observations instead of %d.",
     eif_values <- eif_result$centered_eif
     gc(verbose = FALSE)  # Clear memory after EIF computation
 
-  } else if (estimator == "tmle") {
-    warning("The 'tmle' estimator is EXPERIMENTAL and is not covered by the theory ",
-            "in the accompanying paper. No asymptotic normality or efficiency result ",
-            "is established for it, and its targeting step fluctuates only the outcome ",
-            "model while the estimand also depends on the propensity score through the ",
-            "divergence tilt. Use estimator = 'one_step' for inference you intend to report.",
-            call. = FALSE)
-    # TMLE estimator with full targeting step (experimental, no paper-backed theory)
-    # Algorithm:
-    # 1. Get initial outcome model μₐ(X)
-    # 2. Perform targeting step to get μ*ₐ(X)
-    # 3. Compute EIF with targeted outcome means
-    # 4. Final estimate: mean of EIF values
-
-
-    # Step 1: Initial outcome model (already have outcome_est$outcome_means)
-    initial_outcome_means <- outcome_est$outcome_means
-
-    # Step 2: Perform targeting step
-    targeted_outcome_means <- target_outcome_model_tmle(
-      data = data,
-      outcome_means = initial_outcome_means,
-      propensity_scores = ps_est$propensity_scores,
-      qdelta_results = qdelta_results,
-      vectors = vectors,
-      treatment_cols = treatment_cols,
-      outcome_col = outcome_col,
-      divergence = divergence
-    )
-
-    # Step 3: Extract X, A, Y from data (explicit column specifications)
-    X_matrix <- if (length(covariate_cols) > 0) {
-      as.matrix(data[, covariate_cols, drop = FALSE])
-    } else {
-      NULL
-    }
-    A_matrix <- as.matrix(data[, treatment_cols, drop = FALSE])
-    Y_vector <- data[[outcome_col]]
-
-    # Step 4: Compute EIF with targeted outcome means
-    eif_result <- efficient_influence_function(
-      X = X_matrix,
-      A = A_matrix,
-      Y = Y_vector,
-      propensity_scores = ps_est$propensity_scores,
-      delta = delta,
-      outcome_means = targeted_outcome_means,
-      divergence = divergence,
-      qdelta_results = qdelta_results
-    )
-
-    # Step 5: Final estimate is mean of EIF values
-    psi_est <- mean(eif_result$eif_values)
-    eif_values <- eif_result$centered_eif
-    gc(verbose = FALSE)  # Clear memory after EIF computation
-
-    # Store targeted outcome means in nuisance estimates
-    outcome_est$outcome_means <- targeted_outcome_means
-    outcome_est$targeted <- TRUE
-
   } else {
-    stop("estimator must be one of: 'one_step' (recommended), 'tmle' (experimental, ",
-         "no paper-backed theory), or 'plugin' (deprecated).")
+    stop("estimator must be one of: 'one_step' (recommended) or 'plugin' (deprecated).")
   }
 
   # Apply contrast modification (difference from observed mean)
@@ -2367,8 +2212,8 @@ stratified_contrast <- function(contributions_a, contributions_b,
 #' @param outcome_method Character, outcome model estimation method.
 #'   Options: "glm", "gam", "randomforest", "superlearner". Default: "glm".
 #' @param estimator Character, final estimator type.
-#'   Options: "one_step" (recommended, the estimator analyzed in the paper),
-#'   "tmle" (EXPERIMENTAL, no supporting theory). Default: "one_step".
+#'   Options: "one_step" (recommended, the estimator analyzed in the paper).
+#'   Default: "one_step".
 #' @param cross_fit Logical, use cross-fitting for nuisance estimation.
 #'   Default: FALSE.
 #' @param n_folds Integer, number of folds for cross-fitting. Only used if
@@ -2731,7 +2576,7 @@ estimate_qdelta_mean_stratified <- function(data, delta,
     pattern_loop_seconds = pattern_loop_seconds,
     nuisance_fit_seconds = nuisance_fit_seconds,
     # Everything in the loop that is not nuisance fitting: Q_delta solving, EIF,
-    # (optional) TMLE targeting, aggregation bookkeeping.
+    # aggregation bookkeeping.
     qdelta_eif_seconds = if (is.na(nuisance_fit_seconds)) NA_real_ else
       pattern_loop_seconds - nuisance_fit_seconds,
     cache_used = !is.null(nuisance_cache),

@@ -36,7 +36,7 @@ Vector incremental treatment effects address these challenges by:
 
 1. **Defining interventions** that scale the odds of each treatment by a factor $\delta_k$
 2. **Finding the distribution** $Q_{\boldsymbol{\delta}}$ that is closest to the observed distribution $P_0$ while satisfying the marginal odds constraints
-3. **Estimating causal effects** using doubly-robust methods with efficient influence functions
+3. **Estimating causal effects** using a one-step estimator based on the efficient influence function
 
 ## Basic Usage
 
@@ -226,13 +226,18 @@ The package supports several divergence measures:
 - **χ²-divergence**: $D_{\chi^2}(Q || P_0)$ - penalizes large deviations
 - **Hellinger distance**: $D_H(Q || P_0)$ - symmetric divergence
 
-### 2. Doubly-Robust Estimation
+### 2. Estimation
 
-The package provides three estimation approaches:
+The package provides two estimation approaches:
 
-- **Plugin estimator**: Uses outcome regression only
-- **One-step estimator**: Adds EIF correction (recommended)
-- **TMLE**: Targeted maximum likelihood estimation
+- **Plugin estimator**: Uses outcome regression only (deprecated)
+- **One-step estimator** (recommended): Adds the efficient-influence-function
+  correction. Nuisance error enters only through a second-order product-rate
+  remainder; this is *not* double robustness -- the estimator is not
+  consistent when the propensity model is inconsistent but the outcome model
+  is correct, because the estimand depends on the propensity score through
+  the divergence tilt and not only through inverse-probability weighting.
+  Both nuisances must be consistent (see the accompanying paper's Theorem 1).
 
 ### 3. Comprehensive Inference
 

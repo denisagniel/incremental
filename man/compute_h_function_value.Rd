@@ -20,7 +20,6 @@ Numeric, h(a, lambda) value for the specified divergence
 Main estimation functions for computing psi_delta = \code{E[Y^{Q_delta}]}, the
 counterfactual mean under incremental interventions. Implements outcome
 regression, IPW, and one-step (EIF-based) estimators with full inference.
-Also includes an experimental TMLE-style estimator with no supporting theory.
 
 Computes the h(a, lambda) function for different divergence measures.
 This function is used in the tilting mechanism for Q_delta distributions.

@@ -66,9 +66,8 @@ Options: "glm", "gam", "randomforest", "superlearner". Default: "glm".}
 
 \item{estimator}{Character, final estimator type.
 Options: "one_step" (recommended, EIF-based, the estimator analyzed in the
-paper's Theorem 1), "tmle" (EXPERIMENTAL -- targeting step implemented but
-no supporting theory; not analyzed in the paper), "plugin" (deprecated, no
-EIF correction). Default: "one_step".}
+paper's Theorem 1) or "plugin" (deprecated, no EIF correction).
+Default: "one_step".}
 
 \item{cross_fit}{Logical, use cross-fitting for sample splitting to reduce
 bias. Recommended for small samples or flexible nuisance estimation.
