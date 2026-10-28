@@ -1080,7 +1080,7 @@ Results will be based on %d observations instead of %d.",
       }
     }
 
-    se <- sqrt(var(eif_values) / nrow(data))
+    se <- sqrt(mean(eif_values^2) / length(eif_values))
     alpha <- 1 - confidence_level
     z_alpha <- qnorm(1 - alpha/2)
     ci_lower <- psi_est - z_alpha * se
@@ -1804,7 +1804,7 @@ estimate_pattern_effect <- function(data, pattern_info, delta,
   }
 
   eif_agg_centered <- eif_agg - mean(eif_agg)
-  eif_var <- var(eif_agg_centered)
+  eif_var <- mean(eif_agg_centered^2)
   se_agg <- sqrt(eif_var / n_full)
 
   alpha <- 1 - confidence_level
@@ -2142,7 +2142,7 @@ stratified_contrast <- function(contributions_a, contributions_b,
                                       include_patterns, confidence_level = confidence_level)
   d_if <- rb$eif_values - ra$eif_values
   est <- rb$estimate - ra$estimate
-  se <- sqrt(var(d_if) / length(d_if))
+  se <- sqrt(mean(d_if^2) / length(d_if))
   z_alpha <- qnorm(1 - (1 - confidence_level) / 2)
   z <- est / se
   list(
@@ -2917,7 +2917,7 @@ estimate_qdelta_vanishing_threshold <- function(data, delta,
 
   # Estimate and inference (same as standard estimator)
   estimate <- mean(eif_result$eif_values)
-  variance <- var(eif_result$centered_eif) / n
+  variance <- mean(eif_result$centered_eif^2) / n
   std_error <- sqrt(variance)
 
   # Confidence interval
@@ -3278,7 +3278,7 @@ estimate_qdelta_adaptive <- function(data, delta,
 
   # Estimate and inference
   estimate <- mean(eif_result$eif_values)
-  variance <- var(eif_result$centered_eif) / n
+  variance <- mean(eif_result$centered_eif^2) / n
   std_error <- sqrt(variance)
 
   # Confidence interval

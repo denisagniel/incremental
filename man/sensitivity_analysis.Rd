@@ -2,55 +2,22 @@
 % Please edit documentation in R/inference.R
 \name{sensitivity_analysis}
 \alias{sensitivity_analysis}
-\title{Sensitivity analysis for counterfactual mean under incremental distribution}
+\title{Deprecated: use \code{delta_sweep()} instead}
 \usage{
-sensitivity_analysis(
-  data,
-  delta_grid,
-  divergence = "kl",
-  estimator = "one_step",
-  confidence_level = 0.95,
-  ...
-)
+sensitivity_analysis(...)
 }
 \arguments{
-\item{data}{tibble, observed data}
-
-\item{delta_grid}{List of numeric vectors, grid of delta values to test}
-
-\item{divergence}{Character, divergence type}
-
-\item{estimator}{Character, estimation method}
-
-\item{confidence_level}{Numeric, confidence level}
-
-\item{...}{Additional arguments passed to estimate_qdelta_mean}
+\item{...}{Forwarded to \code{delta_sweep()}.}
 }
 \value{
-List containing:
-\itemize{
-\item estimates: vector of estimates for each delta combination
-\item confidence_intervals: matrix of confidence intervals
-\item delta_grid: grid of delta values used
-\item summary: summary statistics
-}
+See \code{delta_sweep()}.
 }
 \description{
-Performs sensitivity analysis by varying the delta values and examining
-how the estimates change.
+\code{sensitivity_analysis()} was renamed to \code{delta_sweep()} in version 0.1.2 to
+free the name \code{sensitivity_analysis()} for a bounded-risk-ratio sensitivity
+analysis under unmeasured confounding (not yet implemented -- see the
+package README's "Not yet implemented" section). This wrapper forwards to
+\code{delta_sweep()} with a deprecation warning and will be removed in a future
+release.
 }
-\examples{
-# Sensitivity analysis with different delta values
-sim_data <- simulate_vector_treatment_data(n = 500, m = 2, p = 2, seed = 123)
-
-# Create delta grid
-delta_grid <- list(
-  c(1.2, 1.2), c(1.5, 1.5), c(2.0, 2.0),
-  c(1.2, 1.5), c(1.5, 2.0), c(2.0, 1.2)
-)
-
-sens_result <- sensitivity_analysis(sim_data$data, delta_grid,
-                                  treatment_cols = c("A1", "A2"),
-                                  covariate_cols = c("X1", "X2"))
-print(sens_result$summary)
-}
+\keyword{internal}

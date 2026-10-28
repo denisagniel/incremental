@@ -155,11 +155,11 @@ comparison_df <- data.frame(
 print(comparison_df)
 ```
 
-## Sensitivity Analysis
+## Delta Sweep
 
 We can examine how estimates change with different delta values:
 
-```{r sensitivity-analysis}
+```{r delta-sweep}
 # Define different delta scenarios
 delta_scenarios <- list(
   "moderate" = c(1.2, 1.2),
@@ -168,15 +168,15 @@ delta_scenarios <- list(
   "extreme" = c(2.0, 2.0)
 )
 
-# Run sensitivity analysis
-sens_result <- sensitivity_analysis(
+# Run the delta sweep
+sweep_result <- delta_sweep(
   sim_data$data,
   delta_scenarios,
   divergence = "kl"
 )
 
 # View results
-print(sens_result$summary)
+print(sweep_result$summary)
 ```
 
 ## Visualization

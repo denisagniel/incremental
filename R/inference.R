@@ -218,10 +218,16 @@ hypothesis_test_qdelta_mean <- function(estimate, se, null_value = 0,
   ))
 }
 
-#' Sensitivity analysis for counterfactual mean under incremental distribution
+#' Delta sweep: re-estimate across a grid of delta values
 #'
-#' Performs sensitivity analysis by varying the delta values and examining
-#' how the estimates change.
+#' Performs a delta-grid sweep by varying the delta values and examining
+#' how the estimates change. This is NOT a sensitivity analysis under
+#' unmeasured confounding -- it shows how the estimand itself moves with
+#' intervention strength, not how robust a given estimate is to a violation
+#' of ignorability. (Named `sensitivity_analysis()` prior to version 0.1.2;
+#' that name is reserved for a bounded-risk-ratio sensitivity analysis under
+#' unmeasured confounding, which is not yet implemented -- see the package
+#' README.)
 #'
 #' @param data tibble, observed data
 #' @param delta_grid List of numeric vectors, grid of delta values to test
@@ -236,7 +242,7 @@ hypothesis_test_qdelta_mean <- function(estimate, se, null_value = 0,
 #'   - summary: summary statistics
 #' @export
 #' @examples
-#' # Sensitivity analysis with different delta values
+#' # Sweep across different delta values
 #' sim_data <- simulate_vector_treatment_data(n = 500, m = 2, p = 2, seed = 123)
 #' 
 #' # Create delta grid
@@ -245,11 +251,11 @@ hypothesis_test_qdelta_mean <- function(estimate, se, null_value = 0,
 #'   c(1.2, 1.5), c(1.5, 2.0), c(2.0, 1.2)
 #' )
 #' 
-#' sens_result <- sensitivity_analysis(sim_data$data, delta_grid,
-#'                                   treatment_cols = c("A1", "A2"),
-#'                                   covariate_cols = c("X1", "X2"))
-#' print(sens_result$summary)
-sensitivity_analysis <- function(data, delta_grid, divergence = "kl", 
+#' sweep_result <- delta_sweep(sim_data$data, delta_grid,
+#'                            treatment_cols = c("A1", "A2"),
+#'                            covariate_cols = c("X1", "X2"))
+#' print(sweep_result$summary)
+delta_sweep <- function(data, delta_grid, divergence = "kl", 
                                 estimator = "one_step", confidence_level = 0.95, ...) {
   
   n_delta <- length(delta_grid)
@@ -297,4 +303,27 @@ sensitivity_analysis <- function(data, delta_grid, divergence = "kl",
     summary = summary_df,
     confidence_level = confidence_level
   ))
+}
+
+#' Deprecated: use `delta_sweep()` instead
+#'
+#' `sensitivity_analysis()` was renamed to `delta_sweep()` in version 0.1.2 to
+#' free the name `sensitivity_analysis()` for a bounded-risk-ratio sensitivity
+#' analysis under unmeasured confounding (not yet implemented -- see the
+#' package README's "Not yet implemented" section). This wrapper forwards to
+#' `delta_sweep()` with a deprecation warning and will be removed in a future
+#' release.
+#'
+#' @param ... Forwarded to `delta_sweep()`.
+#' @return See `delta_sweep()`.
+#' @export
+#' @keywords internal
+sensitivity_analysis <- function(...) {
+  warning("sensitivity_analysis() was renamed to delta_sweep() and will be ",
+          "removed in a future release. Please call delta_sweep() directly. ",
+          "The name sensitivity_analysis() is reserved for a future ",
+          "bounded-risk-ratio sensitivity analysis under unmeasured ",
+          "confounding, which is NOT what this function does.",
+          call. = FALSE)
+  delta_sweep(...)
 }

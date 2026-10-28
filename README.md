@@ -16,11 +16,11 @@ Vector incremental treatment effects extend the concept of incremental propensit
 - **Efficient-Influence-Function Estimation**: A cross-fitted one-step estimator built from the EIF, with Wald confidence intervals. Nuisance error enters only through a second-order product-rate remainder, so a slowly-converging outcome model is tolerated when the propensity model converges quickly. **This is not double robustness**: the estimator is *not* consistent when the propensity model is inconsistent but the outcome model is correct, because the estimand depends on the propensity score through the divergence tilt and not only through inverse-probability weighting. Both nuisances must be consistent; see Theorem 1 of the accompanying paper.
 - **Inference**: Asymptotic (EIF-based) confidence intervals, bootstrap confidence intervals, and a simple Wald hypothesis test.
 - **Nuisance Estimation**: GLM (multinomial logistic regression via `nnet::multinom()`), random forest, xgboost, and SuperLearner, plus cross-fitting. (The `"nnet"` method name is an alias for the GLM path -- it is multinomial logistic regression, not a neural network.)
-- **Delta Sensitivity Sweeps**: `sensitivity_analysis()` and `estimate_qdelta_sensitivity()` re-run estimation across a grid of delta values to show how the estimate changes with the intervention strength.
+- **Delta Sweeps**: `delta_sweep()` re-runs estimation across a grid of delta values to show how the estimate changes with the intervention strength. (Prior to v0.1.2 this was called `sensitivity_analysis()`; that name is now reserved -- see below.)
 
 ### Not yet implemented
 
-The paper also derives bounds on $\psi(\bdelta)$ under a bounded counterfactual risk-ratio model for violations of ignorability (Proposition on sensitivity bounds, with EIF-based estimators for the bounds). **This sensitivity-bounds machinery is not yet implemented in the package** -- only the delta-sweep functions described above are. If you need the risk-ratio bounds, they must currently be implemented by hand from the paper's formulas.
+The paper also derives bounds on $\psi(\bdelta)$ under a bounded counterfactual risk-ratio model for violations of ignorability (Proposition on sensitivity bounds, with EIF-based estimators for the bounds). **This sensitivity-bounds machinery is not yet implemented in the package.** The name `sensitivity_analysis()` is reserved for it (a thin deprecated wrapper currently forwards that name to `delta_sweep()` with a warning -- it will be repointed to the risk-ratio bounds once implemented, not kept as a `delta_sweep()` alias). If you need the risk-ratio bounds now, they must be implemented by hand from the paper's formulas; see `quality_reports/plans/2026-10-28_rr-sensitivity-bounds.md` in the research repository for an implementation plan.
 
 ## Installation
 
@@ -112,7 +112,7 @@ delta_grid <- list(
   c(1.2, 1.2), c(1.5, 1.5), c(2.0, 2.0),
   c(1.2, 1.5), c(1.5, 2.0), c(2.0, 1.2)
 )
-sens_result <- sensitivity_analysis(sim_data$data, delta_grid, treatment_cols = tcols, covariate_cols = xcols)
+sweep_result <- delta_sweep(sim_data$data, delta_grid, treatment_cols = tcols, covariate_cols = xcols)
 ```
 
 ## Package Structure
@@ -134,7 +134,7 @@ sens_result <- sensitivity_analysis(sim_data$data, delta_grid, treatment_cols = 
 - **`inference_qdelta_mean()`**: Wald-type confidence intervals from EIF values
 - **`bootstrap_qdelta_mean()`**: Bootstrap inference
 - **`hypothesis_test_qdelta_mean()`**: Simple z-test against a null value
-- **`sensitivity_analysis()`** / **`estimate_qdelta_sensitivity()`**: Delta-grid sweeps (see "Not yet implemented" above for the risk-ratio bounds, which these do *not* cover)
+- **`delta_sweep()`**: Delta-grid sweep (see "Not yet implemented" above for the risk-ratio bounds, which this does *not* cover)
 
 ## Theoretical Background
 
