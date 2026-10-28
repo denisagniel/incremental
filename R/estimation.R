@@ -3,7 +3,8 @@
 #' @description
 #' Main estimation functions for computing psi_delta = E[Y^{Q_delta}], the
 #' counterfactual mean under incremental interventions. Implements outcome
-#' regression, IPW, doubly-robust, and TMLE estimators with full inference.
+#' regression, IPW, and one-step (EIF-based) estimators with full inference.
+#' Also includes an experimental TMLE-style estimator with no supporting theory.
 #' @author Denis Agniel
 
 #' Compute h function value for divergence-based tilt
@@ -64,7 +65,9 @@ compute_h_function_value <- function(a, lambda, divergence) {
 #' @description
 #' Calculates the causal estimand E[Y^{Q_delta}] using the identification
 #' results from the paper. Implements three estimation approaches: outcome
-#' regression, inverse probability weighting (IPW), and doubly-robust.
+#' regression, inverse probability weighting (IPW), and the efficient-influence-
+#' function-based estimator (named "doubly_robust" for backward compatibility;
+#' see Details for why that name is a misnomer).
 #' This is typically called internally by estimate_qdelta_mean() but can
 #' be used directly for custom workflows.
 #'
@@ -89,7 +92,8 @@ compute_h_function_value <- function(a, lambda, divergence) {
 #' @param method Character, estimation approach:
 #'   - "outcome_regression": E_n[sum_a mu(a,X) * p_0(a|X) * h(a, lambda)]
 #'   - "ipw": E_n[Y * I(A=a) * h(a, lambda)]
-#'   - "doubly_robust" (recommended): Combines both for double robustness
+#'   - "doubly_robust": Uses the full EIF (recommended; the name is kept for
+#'     backward compatibility but is a misnomer -- see Details)
 #' @param divergence Character, divergence type ("kl", "reverse_kl", "chi2", "hellinger")
 #' @param return Character, what to return: "mean" (default, returns scalar) or
 #'   "vector" (returns observation-level contributions)
@@ -101,10 +105,22 @@ compute_h_function_value <- function(a, lambda, divergence) {
 #' The three methods have different robustness properties:
 #' - **outcome_regression**: Consistent if outcome models correct, ignores propensity misspecification
 #' - **ipw**: Consistent if propensity models correct, ignores outcome misspecification
-#' - **doubly_robust**: Consistent if EITHER outcome OR propensity models correct (recommended)
+#' - **doubly_robust** (recommended): Uses the full EIF. Requires **both** nuisances
+#'   to be consistent, but nuisance error enters only through a second-order
+#'   product-rate remainder
+#'   \code{R_n = max_a||pihat_a - pi_a||_2 * max_a||muhat_a - mu_a||_2 + max_a||pihat_a - pi_a||_2^2},
+#'   so a slowly-converging outcome model is tolerated when the propensity model
+#'   converges quickly. The method name is retained for backward compatibility
+#'   and is a misnomer: this estimator is **not** doubly robust. It is not
+#'   consistent when the propensity model is inconsistent but the outcome model
+#'   is correct, because the estimand depends on the propensity score through
+#'   the divergence tilt and not only through inverse-probability weighting.
+#'   Note also that the squared term requires
+#'   \code{||pihat_a - pi_a||_2 = o_p(n^(-1/4))} even when the outcome model is
+#'   exactly correct. See Theorem 1 of the accompanying paper.
 #'
-#' For doubly-robust estimation, the function uses the full EIF formula with
-#' Omega matrix correction as described in the paper.
+#' For the "doubly_robust" method, the function uses the full EIF formula with
+#' Omega matrix correction, which is the estimator analyzed in the paper.
 #'
 #' @seealso
 #' \code{\link{estimate_qdelta_mean}} for end-to-end estimation with inference,
@@ -361,8 +377,9 @@ target_outcome_model_tmle <- function(data, outcome_means, propensity_scores,
 #' @description
 #' This is the primary user-facing function that estimates E[Y^{Q_delta}], the
 #' counterfactual mean under the incremental intervention distribution Q_delta.
-#' Implements doubly-robust estimation with efficient influence function (EIF)
-#' based inference, supporting both one-step and TMLE estimators.
+#' Implements cross-fitted one-step estimation based on the efficient influence
+#' function (EIF), the estimator analyzed in the accompanying paper. Also
+#' supports an experimental TMLE-style estimator with no supporting theory.
 #'
 #' @param data Data frame or tibble with columns:
 #'   - Treatment columns named A1, A2, ..., Am (binary 0/1)
@@ -394,8 +411,10 @@ target_outcome_model_tmle <- function(data, outcome_means, propensity_scores,
 #'   means E[Y|A=a,X]. Must be supplied together with `oracle_propensities`.
 #'   Default: NULL.
 #' @param estimator Character, final estimator type.
-#'   Options: "one_step" (recommended, EIF-based), "tmle" (targeted maximum
-#'   likelihood), "plugin" (deprecated, not doubly-robust). Default: "one_step".
+#'   Options: "one_step" (recommended, EIF-based, the estimator analyzed in the
+#'   paper's Theorem 1), "tmle" (EXPERIMENTAL -- targeting step implemented but
+#'   no supporting theory; not analyzed in the paper), "plugin" (deprecated, no
+#'   EIF correction). Default: "one_step".
 #' @param cross_fit Logical, use cross-fitting for sample splitting to reduce
 #'   bias. Recommended for small samples or flexible nuisance estimation.
 #'   Default: FALSE.
@@ -478,7 +497,7 @@ target_outcome_model_tmle <- function(data, outcome_means, propensity_scores,
 #' The function implements the estimation procedure described in the paper:
 #' 1. Estimates nuisance functions: propensity scores P(A|X) and outcome models E[Y|A,X]
 #' 2. For each observation, solves for Q_delta distribution using constrained optimization
-#' 3. Computes doubly-robust estimate using EIF or TMLE
+#' 3. Computes the one-step estimate from the EIF (or the experimental TMLE-style estimator)
 #' 4. Provides valid inference via influence function variance or bootstrap
 #'
 #' **Threshold types (handling boundary propensities):**
@@ -993,10 +1012,11 @@ Results will be based on %d observations instead of %d.",
 
   # Compute point estimate
   if (estimator == "plugin") {
-    # DEPRECATED: Plugin estimator is deprecated. Use "one_step" or "tmle" instead.
+    # DEPRECATED: Plugin estimator is deprecated. Use "one_step" instead.
     warning("The 'plugin' estimator is deprecated and will be removed in a future version. ",
-            "Please use 'one_step' or 'tmle' instead. ",
-            "The plugin estimator is not doubly-robust and may be biased if the outcome model is misspecified.")
+            "Please use 'one_step' instead. ",
+            "The plugin estimator does not include the efficient-influence-function ",
+            "correction and may be biased if the outcome model is misspecified.")
 
     psi_est <- compute_psi_delta(data, delta,
                                 treatment_cols = treatment_cols,
@@ -1057,7 +1077,13 @@ Results will be based on %d observations instead of %d.",
     gc(verbose = FALSE)  # Clear memory after EIF computation
 
   } else if (estimator == "tmle") {
-    # TMLE estimator with full targeting step
+    warning("The 'tmle' estimator is EXPERIMENTAL and is not covered by the theory ",
+            "in the accompanying paper. No asymptotic normality or efficiency result ",
+            "is established for it, and its targeting step fluctuates only the outcome ",
+            "model while the estimand also depends on the propensity score through the ",
+            "divergence tilt. Use estimator = 'one_step' for inference you intend to report.",
+            call. = FALSE)
+    # TMLE estimator with full targeting step (experimental, no paper-backed theory)
     # Algorithm:
     # 1. Get initial outcome model μₐ(X)
     # 2. Perform targeting step to get μ*ₐ(X)
@@ -1111,8 +1137,8 @@ Results will be based on %d observations instead of %d.",
     outcome_est$targeted <- TRUE
 
   } else {
-    stop("estimator must be one of: 'one_step', 'tmle', or 'plugin' (deprecated). ",
-         "Recommended: use 'one_step' or 'tmle' for doubly-robust estimation.")
+    stop("estimator must be one of: 'one_step' (recommended), 'tmle' (experimental, ",
+         "no paper-backed theory), or 'plugin' (deprecated).")
   }
 
   # Apply contrast modification (difference from observed mean)
@@ -2341,7 +2367,8 @@ stratified_contrast <- function(contributions_a, contributions_b,
 #' @param outcome_method Character, outcome model estimation method.
 #'   Options: "glm", "gam", "randomforest", "superlearner". Default: "glm".
 #' @param estimator Character, final estimator type.
-#'   Options: "one_step" (recommended), "tmle". Default: "one_step".
+#'   Options: "one_step" (recommended, the estimator analyzed in the paper),
+#'   "tmle" (EXPERIMENTAL, no supporting theory). Default: "one_step".
 #' @param cross_fit Logical, use cross-fitting for nuisance estimation.
 #'   Default: FALSE.
 #' @param n_folds Integer, number of folds for cross-fitting. Only used if

@@ -44,7 +44,7 @@ P(A=a|X) for all 2^m treatment combinations. Rows must sum to 1.}
 values required. Represents odds ratios for marginal treatment probabilities.}
 
 \item{outcome_means}{Numeric matrix (n x 2^m) of conditional outcome means
-E[Y|A=a,X] for all treatment combinations. Required for doubly-robust estimation.}
+E[Y|A=a,X] for all treatment combinations. Required for EIF-based estimation.}
 
 \item{divergence}{Character, divergence measure for Q_delta optimization.
 Options: "kl" (default, most stable), "reverse_kl", "chi2", "hellinger".}

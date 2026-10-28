@@ -114,7 +114,7 @@ bootstrap_qdelta_mean <- function(data, delta, divergence = "kl", estimator = "o
                                 ...) {
   
   # Get original estimate
-  original_result <- estimate_qdelta_mean(data, delta, divergence, 
+  original_result <- estimate_qdelta_mean(data, delta, divergence = divergence,
                                         estimator = estimator, ...)
   original_estimate <- original_result$estimate
   
@@ -131,7 +131,7 @@ bootstrap_qdelta_mean <- function(data, delta, divergence = "kl", estimator = "o
 
     # Re-estimate (simplified - in practice would need to re-estimate nuisance parameters)
     tryCatch({
-      boot_result <- estimate_qdelta_mean(boot_data, delta, divergence,
+      boot_result <- estimate_qdelta_mean(boot_data, delta, divergence = divergence,
                                         estimator = estimator, ...)
       bootstrap_estimates[b] <- boot_result$estimate
 
@@ -258,13 +258,16 @@ sensitivity_analysis <- function(data, delta_grid, divergence = "kl",
     delta_i <- delta_grid[[i]]
     
     tryCatch({
-      result <- estimate_qdelta_mean(data, delta_i, divergence, 
+      result <- estimate_qdelta_mean(data, delta_i, divergence = divergence,
                                    estimator = estimator, ...)
       estimates[i] <- result$estimate
       ci_lower[i] <- result$ci_lower
       ci_upper[i] <- result$ci_upper
       p_values[i] <- result$p_value
     }, error = function(e) {
+      warning("sensitivity_analysis(): delta_grid[[", i, "]] = c(",
+              paste(delta_i, collapse = ", "), ") failed: ", conditionMessage(e),
+              call. = FALSE)
       estimates[i] <<- NA
       ci_lower[i] <<- NA
       ci_upper[i] <<- NA

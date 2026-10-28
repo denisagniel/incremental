@@ -2,9 +2,9 @@
 
 [![R-CMD-check](https://github.com/denisagniel/incremental/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/denisagniel/incremental/actions/workflows/R-CMD-check.yaml)
 
-An R package implementing vector incremental treatment effects for causal inference with multiple binary treatments. The package provides doubly-robust estimation with efficient influence functions, support for multiple divergence measures (KL, reverse KL, f-divergences), and tools for sensitivity analysis.
+An R package implementing vector incremental treatment effects for causal inference with multiple binary treatments. The package provides cross-fitted one-step estimation based on the efficient influence function (EIF), support for multiple divergence measures (KL, reverse KL, chi-squared, Hellinger), and tools for inference.
 
-This package accompanies the paper "Vector incremental treatment effects" (Agniel, Rubinstein, Han, Yu, Finnerty, Horvitz-Lennon, and Normand). See [Citation](#citation) below.
+This package accompanies the paper "Vector incremental treatment effects" (Agniel, Rubinstein, Han, Yu, Finnerty, Horvitz-Lennon, and Normand). See [Citation](#citation) below. **The paper is the source of truth for what the method does and what properties it has; this README defers to it wherever the two could be read as disagreeing.**
 
 ## Overview
 
@@ -12,11 +12,19 @@ Vector incremental treatment effects extend the concept of incremental propensit
 
 ### Key Features
 
-- **Multiple Divergence Measures**: Support for KL-divergence, reverse KL, and general f-divergences (χ², Hellinger, custom)
-- **Doubly-Robust Estimation**: Plugin, one-step, and TMLE estimators with efficient influence functions
-- **Comprehensive Inference**: Asymptotic and bootstrap confidence intervals, hypothesis testing
-- **Flexible Nuisance Estimation**: GLM, SuperLearner, neural networks, and cross-fitting support
-- **Sensitivity Analysis**: Bounds under a bounded counterfactual risk-ratio model for violations of ignorability
+- **Multiple Divergence Measures**: KL-divergence, reverse KL, chi-squared, and Hellinger. (The divergence set is a fixed, hard-coded four-way choice -- there is currently no way to supply an arbitrary custom divergence function.)
+- **Efficient-Influence-Function Estimation**: A cross-fitted one-step estimator built from the EIF, with Wald confidence intervals. Nuisance error enters only through a second-order product-rate remainder, so a slowly-converging outcome model is tolerated when the propensity model converges quickly. **This is not double robustness**: the estimator is *not* consistent when the propensity model is inconsistent but the outcome model is correct, because the estimand depends on the propensity score through the divergence tilt and not only through inverse-probability weighting. Both nuisances must be consistent; see Theorem 1 of the accompanying paper.
+- **Inference**: Asymptotic (EIF-based) confidence intervals, bootstrap confidence intervals, and a simple Wald hypothesis test.
+- **Nuisance Estimation**: GLM (multinomial logistic regression via `nnet::multinom()`), random forest, xgboost, and SuperLearner, plus cross-fitting. (The `"nnet"` method name is an alias for the GLM path -- it is multinomial logistic regression, not a neural network.)
+- **Delta Sensitivity Sweeps**: `sensitivity_analysis()` and `estimate_qdelta_sensitivity()` re-run estimation across a grid of delta values to show how the estimate changes with the intervention strength.
+
+### Not yet implemented
+
+The paper also derives bounds on $\psi(\bdelta)$ under a bounded counterfactual risk-ratio model for violations of ignorability (Proposition on sensitivity bounds, with EIF-based estimators for the bounds). **This sensitivity-bounds machinery is not yet implemented in the package** -- only the delta-sweep functions described above are. If you need the risk-ratio bounds, they must currently be implemented by hand from the paper's formulas.
+
+### Experimental
+
+An `estimator = "tmle"` option is implemented in `estimate_qdelta_mean()` but is **not covered by the accompanying paper's theory** -- no asymptotic normality or efficiency result is established for it, and the function emits a warning when used. Its targeting step fluctuates only the outcome model, while the estimand also depends on the propensity score through the divergence tilt, so it is not solving the full efficient score. Use `estimator = "one_step"` for any inference you intend to report; the `"tmle"` path is provided for exploration only.
 
 ## Installation
 
@@ -28,19 +36,17 @@ devtools::install_github("denisagniel/incremental")
 ### Requirements
 
 - R (>= 4.0.0)
-- Core dependencies (installed automatically): `dplyr`, `tidyr`, `purrr`, `tibble`, `ggplot2`, `R6`, `MASS`, `lpSolve`
+- Dependencies (installed automatically): `dplyr`, `tidyr`, `purrr`, `tibble`, `ggplot2`, `R6`, `MASS`, `lpSolve`, `withr`, `parallel`, `nnet`
 
 ### Optional dependencies
 
-For advanced nuisance-estimation methods, install as needed:
+For additional nuisance-estimation methods, install as needed:
 
 ```r
-install.packages(c("SuperLearner", "sl3"))   # SuperLearner integration
-install.packages("nnet")                     # neural network propensity scores
-install.packages("mgcv")                     # GAM outcome models
-install.packages("randomForest")             # random forest models
-install.packages("xgboost")                  # gradient boosting
-install.packages("nloptr")                   # advanced optimization
+install.packages("SuperLearner")   # SuperLearner integration
+install.packages("mgcv")           # GAM outcome models
+install.packages("randomForest")   # random forest models
+install.packages("xgboost")        # gradient boosting
 ```
 
 ## Quick Start
@@ -57,13 +63,18 @@ sim_data <- simulate_vector_treatment_data(
   interaction_effects = matrix(c(0, 0.2, 0.2, 0), nrow = 2),
   seed = 123
 )
+# Treatment and covariate column names follow the "A1..Am" / "X1..Xp" convention
+# used throughout the package; estimate_qdelta_mean() requires them explicitly
+# (there is no auto-detection).
 
 # Estimate vector incremental treatment effects
 result <- estimate_qdelta_mean(
   sim_data$data,
-  delta = c(1.5, 2.0),   # Odds scaling factors
-  divergence = "kl",     # KL-divergence
-  estimator = "one_step" # One-step estimator
+  delta = c(1.5, 2.0),            # Odds scaling factors
+  treatment_cols = c("A1", "A2"),
+  covariate_cols = c("X1", "X2"),
+  divergence = "kl",               # KL-divergence
+  estimator = "one_step"           # one-step EIF estimator (recommended)
 )
 
 print(result$estimate)    # Point estimate
@@ -76,14 +87,18 @@ print(result$p_value)     # P-value
 ### Advanced Usage
 
 ```r
+tcols <- c("A1", "A2")
+xcols <- c("X1", "X2")
+
 # Use different divergence measures
-kl_result <- estimate_qdelta_mean(sim_data$data, delta = c(1.5, 2.0), divergence = "kl")
-chi2_result <- estimate_qdelta_mean(sim_data$data, delta = c(1.5, 2.0), divergence = "chi2")
+kl_result   <- estimate_qdelta_mean(sim_data$data, delta = c(1.5, 2.0), treatment_cols = tcols, covariate_cols = xcols, divergence = "kl")
+chi2_result <- estimate_qdelta_mean(sim_data$data, delta = c(1.5, 2.0), treatment_cols = tcols, covariate_cols = xcols, divergence = "chi2")
 
 # Use SuperLearner for nuisance estimation
 sl_result <- estimate_qdelta_mean(
   sim_data$data,
   delta = c(1.5, 2.0),
+  treatment_cols = tcols, covariate_cols = xcols,
   ps_method = "superlearner",
   outcome_method = "superlearner"
 )
@@ -92,43 +107,38 @@ sl_result <- estimate_qdelta_mean(
 boot_result <- bootstrap_qdelta_mean(
   sim_data$data,
   delta = c(1.5, 2.0),
+  treatment_cols = tcols, covariate_cols = xcols,
   n_bootstrap = 1000
 )
 
-# Sensitivity analysis across a grid of delta values
+# Sweep estimates across a grid of delta values
 delta_grid <- list(
   c(1.2, 1.2), c(1.5, 1.5), c(2.0, 2.0),
   c(1.2, 1.5), c(1.5, 2.0), c(2.0, 1.2)
 )
-sens_result <- sensitivity_analysis(sim_data$data, delta_grid)
+sens_result <- sensitivity_analysis(sim_data$data, delta_grid, treatment_cols = tcols, covariate_cols = xcols)
 ```
 
 ## Package Structure
 
 ### Core Functions
 
-- **`compute_q_delta()`**: Main function to find the Q_delta distribution satisfying marginal odds constraints via minimum-divergence projection
-- **`estimate_qdelta_mean()`**: Primary user-facing function for estimation
-- **`efficient_influence_function()`**: Efficient influence function computation
-- **`compute_psi_delta()`**: Calculate E[Y^{Q_delta}] using identification results
-
-### Divergence Functions
-
-- **`kl_divergence_qdelta()`**: Forward KL D_KL(Q || P_0) implementation
-- **`reverse_kl_divergence_qdelta()`**: Reverse KL D_KL(P_0 || Q) implementation
-- **`f_divergence_qdelta()`**: General f-divergence framework
+- **`estimate_qdelta_mean()`**: Primary user-facing function for estimation and inference
+- **`compute_psi_delta()`**: Internal workhorse implementing outcome-regression, IPW, and EIF-based ("doubly_robust", a legacy name -- see Experimental/robustness notes above) point estimates; usually called via `estimate_qdelta_mean()`
+- **`efficient_influence_function()`** / **`efficient_influence_function_active()`**: Efficient influence function computation
+- **`compute_h_function_value()`** / internal `divergence_h_pair()` (`R/divergence_h_functions.R`): the four divergence-tilt functions (KL, reverse KL, chi-squared, Hellinger) and their derivatives, dispatched by the `divergence` argument. There is no separate `kl_divergence_qdelta()` / `f_divergence_qdelta()`-style function per divergence -- all four are handled by this single dispatcher.
 
 ### Nuisance Estimation
 
-- **`estimate_propensity_scores()`**: Propensity score estimation with multiple methods
-- **`estimate_outcome_models()`**: Outcome regression with various algorithms
+- **`estimate_propensity_scores()`**: Propensity score estimation (glm/nnet, random forest, xgboost, SuperLearner, sequential, mlr3)
+- **`estimate_outcome_models()`**: Outcome regression with the same set of base learners
 
 ### Inference
 
-- **`inference_qdelta_mean()`**: Wald-type confidence intervals
+- **`inference_qdelta_mean()`**: Wald-type confidence intervals from EIF values
 - **`bootstrap_qdelta_mean()`**: Bootstrap inference
-- **`hypothesis_test_qdelta_mean()`**: Hypothesis testing
-- **`sensitivity_analysis()`**: Sensitivity analysis under a bounded risk-ratio model
+- **`hypothesis_test_qdelta_mean()`**: Simple z-test against a null value
+- **`sensitivity_analysis()`** / **`estimate_qdelta_sensitivity()`**: Delta-grid sweeps (see "Not yet implemented" above for the risk-ratio bounds, which these do *not* cover)
 
 ## Theoretical Background
 
@@ -136,7 +146,7 @@ Vector incremental treatment effects extend incremental propensity score interve
 
 1. **Defines causal effects** based on marginal odds scaling: P(A_k = 1 | X) / (1 - P(A_k = 1 | X)) = δ_k × P_0(A_k = 1 | X) / (1 - P_0(A_k = 1 | X))
 2. **Finds the Q_delta distribution** that minimizes a divergence D(Q || P_0) subject to the marginal constraints, resolving the non-uniqueness of a joint distribution with specified marginals
-3. **Estimates E[Y^{Q_delta}]** using doubly-robust methods with efficient influence functions
+3. **Estimates E[Y^{Q_delta}]** with a cross-fitted one-step estimator derived from the efficient influence function
 4. **Provides inference** using asymptotic theory or bootstrap methods, and avoids requiring full joint-treatment positivity
 
 ### Key Advantages
@@ -145,47 +155,7 @@ Vector incremental treatment effects extend incremental propensity score interve
 - **Handles multiple treatments**: naturally extends to vector-valued treatments
 - **Preserves dependence structure**: the minimum-divergence projection departs as little as possible from the observed joint law
 - **Interpretable effects**: odds scaling has a clear policy interpretation
-- **Doubly-robust estimation** with efficient influence functions
-
-## Examples
-
-### Example 1: Basic Estimation
-
-```r
-data <- simulate_vector_treatment_data(
-  n = 1000, m = 2, p = 2,
-  treatment_effects = c(0.5, 0.3),
-  interaction_effects = matrix(c(0, 0.2, 0.2, 0), nrow = 2)
-)
-
-result <- estimate_qdelta_mean(data$data, delta = c(1.5, 1.5))
-```
-
-### Example 2: Divergence Comparison
-
-```r
-kl_result <- estimate_qdelta_mean(data$data, delta = c(1.5, 2.0), divergence = "kl")
-chi2_result <- estimate_qdelta_mean(data$data, delta = c(1.5, 2.0), divergence = "chi2")
-hellinger_result <- estimate_qdelta_mean(data$data, delta = c(1.5, 2.0), divergence = "hellinger")
-
-estimates <- c(kl_result$estimate, chi2_result$estimate, hellinger_result$estimate)
-names(estimates) <- c("KL", "Chi2", "Hellinger")
-print(estimates)
-```
-
-### Example 3: Sensitivity Analysis
-
-```r
-delta_scenarios <- list(
-  "moderate" = c(1.2, 1.2),
-  "large" = c(1.5, 1.5),
-  "mixed" = c(1.2, 1.5),
-  "extreme" = c(2.0, 2.0)
-)
-
-sens_result <- sensitivity_analysis(data$data, delta_scenarios)
-print(sens_result$summary)
-```
+- **Efficient and rate-robust**: attains the semiparametric efficiency bound; nuisance error enters only at second order, so the outcome model may converge slowly provided the propensity model converges quickly (both must be consistent -- this is not double robustness)
 
 ## Testing
 
@@ -197,16 +167,15 @@ devtools::test()
 
 ### Vignettes
 
-- **Introduction**: Basic usage and examples (`vignette("introduction", package = "incremental")`)
-- **Feasibility & optimization**: theory and diagnostics behind the minimum-divergence projection (`vignette("feasibility-optimization", package = "incremental")`)
+- **Introduction** (`vignette("introduction", package = "incremental")`): basic usage and examples
+- **Feasibility & optimization** (`vignette("feasibility-optimization", package = "incremental")`): theory and diagnostics behind the minimum-divergence projection
 
 ### Function Documentation
 
 ```r
 ?estimate_qdelta_mean
-?compute_q_delta
+?compute_psi_delta
 ?efficient_influence_function
-?incremental
 ```
 
 ## Contributing

@@ -84,7 +84,7 @@ List containing:
 }
 \description{
 Estimates propensity scores P(A = a | X) for all 2^m treatment combinations
-using various methods. Propensity scores are required for doubly-robust
+using various methods. Propensity scores are required for EIF-based (one-step)
 estimation and must be properly calibrated for valid inference.
 }
 \details{

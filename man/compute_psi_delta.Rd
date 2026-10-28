@@ -52,7 +52,8 @@ Defaults to length(treatment_cols).}
 \item{method}{Character, estimation approach:
 - "outcome_regression": E_n[sum_a mu(a,X) * p_0(a|X) * h(a, lambda)]
 - "ipw": E_n[Y * I(A=a) * h(a, lambda)]
-- "doubly_robust" (recommended): Combines both for double robustness}
+- "doubly_robust": Uses the full EIF (recommended; the name is kept for
+  backward compatibility but is a misnomer -- see Details)}
 
 \item{divergence}{Character, divergence type ("kl", "reverse_kl", "chi2", "hellinger")}
 
@@ -66,7 +67,9 @@ If return = "mean": Numeric scalar, estimated E[Y^{Q_delta}].
 \description{
 Calculates the causal estimand E[Y^{Q_delta}] using the identification
 results from the paper. Implements three estimation approaches: outcome
-regression, inverse probability weighting (IPW), and doubly-robust.
+regression, inverse probability weighting (IPW), and the efficient-influence-
+function-based estimator (named "doubly_robust" for backward compatibility;
+see Details for why that name is a misnomer).
 This is typically called internally by estimate_qdelta_mean() but can
 be used directly for custom workflows.
 }
@@ -74,10 +77,22 @@ be used directly for custom workflows.
 The three methods have different robustness properties:
 - **outcome_regression**: Consistent if outcome models correct, ignores propensity misspecification
 - **ipw**: Consistent if propensity models correct, ignores outcome misspecification
-- **doubly_robust**: Consistent if EITHER outcome OR propensity models correct (recommended)
+- **doubly_robust** (recommended): Uses the full EIF. Requires **both** nuisances
+  to be consistent, but nuisance error enters only through a second-order
+  product-rate remainder
+  \code{R_n = max_a||pihat_a - pi_a||_2 * max_a||muhat_a - mu_a||_2 + max_a||pihat_a - pi_a||_2^2},
+  so a slowly-converging outcome model is tolerated when the propensity model
+  converges quickly. The method name is retained for backward compatibility
+  and is a misnomer: this estimator is **not** doubly robust. It is not
+  consistent when the propensity model is inconsistent but the outcome model
+  is correct, because the estimand depends on the propensity score through
+  the divergence tilt and not only through inverse-probability weighting.
+  Note also that the squared term requires
+  \code{||pihat_a - pi_a||_2 = o_p(n^(-1/4))} even when the outcome model is
+  exactly correct. See Theorem 1 of the accompanying paper.
 
-For doubly-robust estimation, the function uses the full EIF formula with
-Omega matrix correction as described in the paper.
+For the "doubly_robust" method, the function uses the full EIF formula with
+Omega matrix correction, which is the estimator analyzed in the paper.
 }
 \examples{
 # Generate example data

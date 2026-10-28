@@ -2,9 +2,11 @@
 #' @title Efficient Influence Function Computation
 #' @description
 #' Implements efficient influence function (EIF) for vector incremental treatment
-#' effects. Provides doubly-robust estimation combining outcome regression and
-#' inverse probability weighting components. Includes per-observation Q_delta
-#' solver and EIF lambda derivatives.
+#' effects. Combines outcome regression and inverse probability weighting
+#' components into the one-step estimator analyzed in the accompanying paper
+#' (nuisance error enters only through a second-order product-rate remainder;
+#' this is not double robustness -- see Theorem 1 of the paper). Includes
+#' per-observation Q_delta solver and EIF lambda derivatives.
 #' @author Denis Agniel
 
 # Constants used from constants.R:
@@ -625,9 +627,10 @@ efficient_influence_function_chunked <- function(X = NULL, A, Y = NULL, R = NULL
 #'
 #' @description
 #' Computes the efficient influence function (EIF) for vector incremental treatment
-#' effects using doubly-robust estimation. The EIF provides the basis for
-#' asymptotically efficient estimation and valid inference via the central limit
-#' theorem: sqrt(n) * (psi_hat - psi) -> N(0, E[EIF^2]).
+#' effects, combining outcome-regression and inverse-probability-weighting
+#' components into the one-step estimator analyzed in the paper. The EIF provides
+#' the basis for asymptotically efficient estimation and valid inference via the
+#' central limit theorem: sqrt(n) * (psi_hat - psi) -> N(0, E[EIF^2]).
 #'
 #' For large datasets (n > 10,000), automatically uses memory-efficient chunked
 #' computation to avoid memory issues.
@@ -647,7 +650,7 @@ efficient_influence_function_chunked <- function(X = NULL, A, Y = NULL, R = NULL
 #' @param delta Numeric vector (length m) of target marginal changes. Positive
 #'   values required. Represents odds ratios for marginal treatment probabilities.
 #' @param outcome_means Numeric matrix (n x 2^m) of conditional outcome means
-#'   E[Y|A=a,X] for all treatment combinations. Required for doubly-robust estimation.
+#'   E[Y|A=a,X] for all treatment combinations. Required for EIF-based estimation.
 #' @param divergence Character, divergence measure for Q_delta optimization.
 #'   Options: "kl" (default, most stable), "reverse_kl", "chi2", "hellinger".
 #' @param qdelta_results List (length n) of pre-computed Q_delta solver results.

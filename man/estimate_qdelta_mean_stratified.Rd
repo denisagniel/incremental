@@ -85,7 +85,8 @@ Default: "glm".}
 Options: "glm", "gam", "randomforest", "superlearner". Default: "glm".}
 
 \item{estimator}{Character, final estimator type.
-Options: "one_step" (recommended), "tmle". Default: "one_step".}
+Options: "one_step" (recommended, the estimator analyzed in the paper),
+"tmle" (EXPERIMENTAL, no supporting theory). Default: "one_step".}
 
 \item{cross_fit}{Logical, use cross-fitting for nuisance estimation.
 Default: FALSE.}

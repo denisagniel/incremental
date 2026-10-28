@@ -16,9 +16,11 @@ Integer chunk size in `[EIF_MIN_CHUNK, EIF_MAX_CHUNK]`.
 }
 \description{
 Implements efficient influence function (EIF) for vector incremental treatment
-effects. Provides doubly-robust estimation combining outcome regression and
-inverse probability weighting components. Includes per-observation Q_delta
-solver and EIF lambda derivatives.
+effects. Combines outcome regression and inverse probability weighting
+components into the one-step estimator analyzed in the accompanying paper
+(nuisance error enters only through a second-order product-rate remainder;
+this is not double robustness -- see Theorem 1 of the paper). Includes
+per-observation Q_delta solver and EIF lambda derivatives.
 }
 \author{
 Denis Agniel

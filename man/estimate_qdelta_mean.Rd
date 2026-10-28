@@ -77,8 +77,10 @@ means E[Y|A=a,X]. Must be supplied together with `oracle_propensities`.
 Default: NULL.}
 
 \item{estimator}{Character, final estimator type.
-Options: "one_step" (recommended, EIF-based), "tmle" (targeted maximum
-likelihood), "plugin" (deprecated, not doubly-robust). Default: "one_step".}
+Options: "one_step" (recommended, EIF-based, the estimator analyzed in the
+paper's Theorem 1), "tmle" (EXPERIMENTAL -- targeting step implemented but
+no supporting theory; not analyzed in the paper), "plugin" (deprecated, no
+EIF correction). Default: "one_step".}
 
 \item{cross_fit}{Logical, use cross-fitting for sample splitting to reduce
 bias. Recommended for small samples or flexible nuisance estimation.
@@ -176,14 +178,15 @@ List containing:
 \description{
 This is the primary user-facing function that estimates E[Y^{Q_delta}], the
 counterfactual mean under the incremental intervention distribution Q_delta.
-Implements doubly-robust estimation with efficient influence function (EIF)
-based inference, supporting both one-step and TMLE estimators.
+Implements cross-fitted one-step estimation based on the efficient influence
+function (EIF), the estimator analyzed in the accompanying paper. Also
+supports an experimental TMLE-style estimator with no supporting theory.
 }
 \details{
 The function implements the estimation procedure described in the paper:
 1. Estimates nuisance functions: propensity scores P(A|X) and outcome models E[Y|A,X]
 2. For each observation, solves for Q_delta distribution using constrained optimization
-3. Computes doubly-robust estimate using EIF or TMLE
+3. Computes the one-step estimate from the EIF (or the experimental TMLE-style estimator)
 4. Provides valid inference via influence function variance or bootstrap
 
 **Threshold types (handling boundary propensities):**

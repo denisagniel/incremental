@@ -63,8 +63,10 @@ Options: "glm", "randomforest", "xgboost". Only used if ps_method = "binary_per_
 Options: "glm", "gam", "randomforest", "superlearner". Default: "glm".}
 
 \item{estimator}{Character, final estimator type.
-Options: "one_step" (recommended, EIF-based), "tmle" (targeted maximum
-likelihood), "plugin" (deprecated, not doubly-robust). Default: "one_step".}
+Options: "one_step" (recommended, EIF-based, the estimator analyzed in the
+paper's Theorem 1), "tmle" (EXPERIMENTAL -- targeting step implemented but
+no supporting theory; not analyzed in the paper), "plugin" (deprecated, no
+EIF correction). Default: "one_step".}
 
 \item{cross_fit}{Logical, use cross-fitting for sample splitting to reduce
 bias. Recommended for small samples or flexible nuisance estimation.

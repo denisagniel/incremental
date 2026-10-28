@@ -6,7 +6,13 @@ Authors@R: c(
     person("Denis", "Agniel", email = "denis.agniel@rand.org", role = c("aut", "cre")),
     person("Max", "Rubinstein", email = "mrubinstein@rand.org", role = "ctb")
     )
-Description: Implements vector incremental treatment effects for causal inference with multiple binary treatments. Provides doubly-robust estimation with efficient influence functions, support for multiple divergence measures (KL, reverse KL, f-divergences), and comprehensive simulation tools.
+Description: Implements vector incremental treatment effects for causal
+    inference with multiple binary treatments. Provides cross-fitted one-step
+    estimation based on the efficient influence function, with asymptotically
+    valid Wald inference under a second-order product-rate condition on the
+    nuisance estimators (this is not double robustness -- see the accompanying
+    paper). Supports multiple divergence measures (KL, reverse KL, chi-squared,
+    Hellinger) and comprehensive simulation tools.
 License: MIT + file LICENSE
 URL: https://github.com/denisagniel/incremental
 BugReports: https://github.com/denisagniel/incremental/issues
@@ -27,19 +33,15 @@ Imports:
     withr,
     MASS,
     lpSolve,
-    parallel
+    parallel,
+    nnet
 Suggests:
     testthat (>= 3.0.0),
     knitr,
     rmarkdown,
     SuperLearner,
-    sl3,
-    nnet,
     mgcv,
     randomForest,
     xgboost (>= 2.0.0),
-    nloptr,
-    yaml,
-    mockery,
     RhpcBLASctl
 VignetteBuilder: knitr

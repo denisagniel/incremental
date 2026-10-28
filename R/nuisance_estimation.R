@@ -622,7 +622,7 @@ predict_conditional_model_sequential <- function(model, newdata) {
 #'
 #' @description
 #' Estimates propensity scores P(A = a | X) for all 2^m treatment combinations
-#' using various methods. Propensity scores are required for doubly-robust
+#' using various methods. Propensity scores are required for EIF-based (one-step)
 #' estimation and must be properly calibrated for valid inference.
 #'
 #' @param data Data frame with columns:
@@ -1504,7 +1504,7 @@ estimate_propensity_scores <- function(data, treatment_cols, covariate_cols,
 #' Estimates conditional outcome means E[Y | A = a, X] for all 2^m treatment
 #' combinations. Fits stratified models (one per combination) when feasible, or
 #' a single model with treatment interactions for high-dimensional cases.
-#' Required for doubly-robust estimation.
+#' Required for EIF-based (one-step) estimation.
 #'
 #' @param data Data frame with columns:
 #'   - Treatment: A1, A2, ..., Am (binary 0/1)

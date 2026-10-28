@@ -79,7 +79,7 @@ List containing:
 Estimates conditional outcome means E[Y | A = a, X] for all 2^m treatment
 combinations. Fits stratified models (one per combination) when feasible, or
 a single model with treatment interactions for high-dimensional cases.
-Required for doubly-robust estimation.
+Required for EIF-based (one-step) estimation.
 }
 \details{
 **Modeling approach:** By default (`outcome_fit = "pooled"`) the function fits a
