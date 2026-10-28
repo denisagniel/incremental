@@ -55,5 +55,5 @@ nuisance_cache_stats(cache)$n_ps_entries  # 0
 }
 \seealso{
 \code{\link{.clear_outcomes}}, \code{\link{nuisance_cache_stats}},
-  \code{\link{estimate_qdelta_mean_stratified}}
+\code{\link{estimate_qdelta_mean_stratified}}
 }

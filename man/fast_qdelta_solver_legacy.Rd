@@ -6,30 +6,32 @@
 \description{
 Verbatim snapshot of the scalar-loop Q_delta Newton solver as it stood
 immediately before the 2026-08-11 vectorization
-(`quality_reports/specs/2026-08-10_qdelta-solver-performance-fix.md`, MUST
-item "Numerical equivalence, old vs. new": *"Keep the current implementation
+(\verb{quality_reports/specs/2026-08-10_qdelta-solver-performance-fix.md}, MUST
+item "Numerical equivalence, old vs. new": \emph{"Keep the current implementation
 accessible ... for direct in-session comparison -- do not rely on git
-history/checkout for this."*).
+history/checkout for this."}).
 
-"Current implementation" for this snapshot means the **post-bugfix** code of
+"Current implementation" for this snapshot means the \strong{post-bugfix} code of
 2026-08-10, i.e. it already includes both prerequisite fixes:
-  1. `divergence_h_pair()` unification across all h/h' call sites
-     (`R/divergence_h_functions.R`);
-  2. the `prev_constraint_norm` update moved to the END of the Newton loop
-     body, so the two "stalled" checks compare against the previous
-     iteration's norm (see `tests/testthat/test-qdelta-newton-stall-bugfix.R`).
+\enumerate{
+\item \code{divergence_h_pair()} unification across all h/h' call sites
+(\code{R/divergence_h_functions.R});
+\item the \code{prev_constraint_norm} update moved to the END of the Newton loop
+body, so the two "stalled" checks compare against the previous
+iteration's norm (see \code{tests/testthat/test-qdelta-newton-stall-bugfix.R}).
+}
 
-Every function here is suffixed `_legacy` and is called by nothing in the
-package except `tests/testthat/test-qdelta-vectorized-equivalence.R`. It is
+Every function here is suffixed \verb{_legacy} and is called by nothing in the
+package except \code{tests/testthat/test-qdelta-vectorized-equivalence.R}. It is
 NOT exported, NOT a fallback, and NOT maintained: it exists so the vectorized
 rewrite can be diffed numerically against the exact code that produced the
 methods paper's existing application results. Functions that the rewrite did
-NOT change (`compute_constraint_vector_internal()`,
-`compute_q_delta_weights_internal()`, `compute_jacobian_numerical_internal()`,
-`compute_target_marginals()`, `solve_qdelta_single_treatment()`,
-`compute_constraint_vector_m()`, `compute_q_delta_weights()`,
-`compute_jacobian_numerical_m()`, `get_initial_lambda_active()`) are shared
-with `fast_qdelta_solver.R` rather than duplicated, so the comparison isolates
+NOT change (\code{compute_constraint_vector_internal()},
+\code{compute_q_delta_weights_internal()}, \code{compute_jacobian_numerical_internal()},
+\code{compute_target_marginals()}, \code{solve_qdelta_single_treatment()},
+\code{compute_constraint_vector_m()}, \code{compute_q_delta_weights()},
+\code{compute_jacobian_numerical_m()}, \code{get_initial_lambda_active()}) are shared
+with \code{fast_qdelta_solver.R} rather than duplicated, so the comparison isolates
 exactly the changed code.
 
 Do not "fix" anything in this file. If it needs to change, the rewrite is

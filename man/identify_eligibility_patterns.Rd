@@ -15,18 +15,18 @@ If NULL, auto-detects columns named "elig_A1", "elig_A2", etc.}
 \value{
 List containing:
 \describe{
-  \item{patterns}{Data frame with:}
-    \describe{
-      \item{pattern_id}{Integer, sequential pattern identifier}
-      \item{pattern_string}{Character, human-readable pattern (e.g., "10" for A1 eligible, A2 not)}
-      \item{eligibility}{List column, binary vector indicating eligible treatments}
-      \item{n_obs}{Integer, number of observations with this pattern}
-      \item{prevalence}{Numeric, proportion of sample with this pattern}
-      \item{n_eligible}{Integer, number of eligible treatments in this pattern}
-      \item{obs_indices}{List column, indices of observations with this pattern}
-    }
-  \item{pattern_assignments}{Integer vector (length n), pattern ID for each observation}
-  \item{m}{Integer, total number of treatments}
+\item{patterns}{Data frame with:}
+\describe{
+\item{pattern_id}{Integer, sequential pattern identifier}
+\item{pattern_string}{Character, human-readable pattern (e.g., "10" for A1 eligible, A2 not)}
+\item{eligibility}{List column, binary vector indicating eligible treatments}
+\item{n_obs}{Integer, number of observations with this pattern}
+\item{prevalence}{Numeric, proportion of sample with this pattern}
+\item{n_eligible}{Integer, number of eligible treatments in this pattern}
+\item{obs_indices}{List column, indices of observations with this pattern}
+}
+\item{pattern_assignments}{Integer vector (length n), pattern ID for each observation}
+\item{m}{Integer, total number of treatments}
 }
 }
 \description{

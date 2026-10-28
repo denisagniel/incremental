@@ -20,21 +20,21 @@ observation (without intercept).}
 
 \item{propensity_scores}{Numeric vector of length 2^m, \eqn{p_0(a \mid X_i)}.}
 
-\item{qdelta_result}{List for this observation from `compute_qdelta_per_obs()`
-(needs `lambda`, `q_delta`, `delta`).}
+\item{qdelta_result}{List for this observation from \code{compute_qdelta_per_obs()}
+(needs \code{lambda}, \code{q_delta}, \code{delta}).}
 
 \item{h_values}{Numeric vector of length 2^m, \eqn{h(u_a)}.}
 
 \item{h_dot_values}{Numeric vector of length 2^m, \eqn{h'(u_a)}.}
 
-\item{a_mat}{The **extended** \eqn{2^m \times (m+1)} design `cbind(1, combos)`.
-Note the parameter name: both call sites (`eif_compute_chunk()` and the
-non-chunked path in `efficient_influence_function()`) pass
-`a_extended_matrix` here, and the body relies on that (`a_mat[, -1]` for the
-marginals, `ncol(a_mat)` as m+1, rows compared against `c(1, A)`).}
+\item{a_mat}{The \strong{extended} \eqn{2^m \times (m+1)} design \code{cbind(1, combos)}.
+Note the parameter name: both call sites (\code{eif_compute_chunk()} and the
+non-chunked path in \code{efficient_influence_function()}) pass
+\code{a_extended_matrix} here, and the body relies on that (\code{a_mat[, -1]} for the
+marginals, \code{ncol(a_mat)} as m+1, rows compared against \code{c(1, A)}).}
 
 \item{divergence}{Character, divergence type (unused directly; h/h' arrive
-pre-computed via `divergence_h_pair()`).}
+pre-computed via \code{divergence_h_pair()}).}
 }
 \value{
 Numeric vector of length m+1

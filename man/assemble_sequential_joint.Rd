@@ -7,24 +7,24 @@
 assemble_sequential_joint(pred_cache, m, perm = seq_len(m))
 }
 \arguments{
-\item{pred_cache}{List of m matrices; `pred_cache[[k]]` is n x 2^(k-1), column c holding
+\item{pred_cache}{List of m matrices; \code{pred_cache[[k]]} is n x 2^(k-1), column c holding
 P(A_k = 1 | history c, X) where history c has bit p = A_p (p < k), column 1 varying fastest.}
 
 \item{m}{Integer, number of treatments.}
 
-\item{perm}{Integer vector of length m, `match(treatment_order, treatment_cols)`.}
+\item{perm}{Integer vector of length m, \code{match(treatment_order, treatment_cols)}.}
 }
 \value{
-Matrix n x 2^m of joint probabilities, columns in `treatment_cols` order.
+Matrix n x 2^m of joint probabilities, columns in \code{treatment_cols} order.
 }
 \description{
 Vectorised over all 2^m cells: for treatment k the conditioning history of cell j is the
 low (k - 1) bits of its index, so no per-cell search is needed (the previous version rebuilt
-the binary design and scanned it with `apply()` for every cell, O(4^m) interpreted calls).
+the binary design and scanned it with \code{apply()} for every cell, O(4^m) interpreted calls).
 }
 \details{
-Cells are first formed in ORDER space (bit p = `treatment_order[p]`, which is how the
-conditional models were fitted) and then mapped to the column order of `vectors`
-(`treatment_cols`). With the default order the map is the identity.
+Cells are first formed in ORDER space (bit p = \code{treatment_order[p]}, which is how the
+conditional models were fitted) and then mapped to the column order of \code{vectors}
+(\code{treatment_cols}). With the default order the map is the identity.
 }
 \keyword{internal}

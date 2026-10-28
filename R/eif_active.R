@@ -143,7 +143,7 @@ calculate_eif_lambda_active <- function(A, propensity_scores, qdelta_result,
 #'
 #' @details
 #' **Difference from standard EIF:**
-#' - Uses pre-computed active sets K_ε(X) = {k: m_k(X) ∈ [ε, 1-ε]}
+#' - Uses pre-computed active sets `K_ε(X) = {k: m_k(X) ∈ [ε, 1-ε]}`
 #' - Computes reduced-dimension Ω based on active constraints only
 #' - Observations with insufficient active treatments handled specially
 #'
@@ -155,7 +155,7 @@ calculate_eif_lambda_active <- function(A, propensity_scores, qdelta_result,
 #' - Satisfies margin conditions for asymptotic theory
 #'
 #' **Insufficient active treatments:**
-#' If active_sets$sufficient_active[i] = FALSE, the EIF for that observation
+#' If `active_sets$sufficient_active[i]` is `FALSE`, the EIF for that observation
 #' is set to zero (no contribution). The user should verify this is acceptable
 #' or adjust the threshold ε.
 #'

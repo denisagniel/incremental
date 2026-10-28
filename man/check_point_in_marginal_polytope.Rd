@@ -19,10 +19,12 @@ check_point_in_marginal_polytope(
 }
 \value{
 List containing:
-  - feasible: logical, whether point is in polytope
-  - in_interior: logical, whether point is in relative interior
-  - weights: numeric vector, convex combination weights (if feasible)
-  - distance_to_boundary: numeric, distance to polytope boundary
+\itemize{
+\item feasible: logical, whether point is in polytope
+\item in_interior: logical, whether point is in relative interior
+\item weights: numeric vector, convex combination weights (if feasible)
+\item distance_to_boundary: numeric, distance to polytope boundary
+}
 }
 \description{
 Uses linear programming to determine if a target marginal vector lies

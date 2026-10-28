@@ -29,9 +29,11 @@ estimate_qdelta_vanishing_threshold(
 }
 \arguments{
 \item{data}{Data frame or tibble with columns:
-- Treatment columns named A1, A2, ..., Am (binary 0/1)
-- Covariate columns named X1, X2, ..., Xp (numeric)
-- Outcome column Y (numeric)}
+\itemize{
+\item Treatment columns named A1, A2, ..., Am (binary 0/1)
+\item Covariate columns named X1, X2, ..., Xp (numeric)
+\item Outcome column Y (numeric)
+}}
 
 \item{delta}{Numeric vector of length m specifying target marginal treatment
 probabilities as odds ratios. Each element must be positive. Values > 1
@@ -39,7 +41,7 @@ increase treatment probability; values < 1 decrease it. E.g., delta = c(1.5, 2.0
 increases P(A1=1) by factor 1.5 and P(A2=1) by factor 2.0.}
 
 \item{treatment_cols}{Character vector of treatment column names (required).
-Length defines m; order must match `delta` and the intended bit order.}
+Length defines m; order must match \code{delta} and the intended bit order.}
 
 \item{covariate_cols}{Character vector of covariate column names (required).}
 
@@ -74,7 +76,7 @@ Default: FALSE.}
 cross_fit = TRUE. Default: 5.}
 
 \item{confidence_level}{Numeric in (0, 1), confidence level for intervals.
-Default: 0.95 (95% confidence intervals).}
+Default: 0.95 (95\% confidence intervals).}
 
 \item{bootstrap}{Logical, use bootstrap for inference instead of asymptotic
 variance. More robust but slower. Default: FALSE.}
@@ -82,7 +84,7 @@ variance. More robust but slower. Default: FALSE.}
 \item{n_bootstrap}{Integer, number of bootstrap resamples. Only used if
 bootstrap = TRUE. Default: 1000.}
 
-\item{gamma}{Numeric, threshold rate parameter. ε_n = C*n^{-γ}. If NULL
+\item{gamma}{Numeric, threshold rate parameter. \code{ε_n = C*n^{-γ}}. If NULL
 (default), automatically selects γ = 0.3. The asymptotic-normality condition
 γ > 1/(2(1+β)) (β = margin exponent of the data law) is not enforced: β is
 not estimable in practice and does not affect whether the estimate is
@@ -92,62 +94,70 @@ computable. Larger γ gives a faster-vanishing threshold.}
 observation. Observations with fewer active treatments contribute zero to EIF.
 Default: 1.}
 
-\item{eps_constant}{Numeric, constant C in ε_n = C*n^{-γ}. Default: 1.}
+\item{eps_constant}{Numeric, constant C in \code{ε_n = C*n^{-γ}}. Default: 1.}
 
-\item{max_qdelta_failure_rate}{Numeric in `[0, 1]`: the largest share of observations whose
+\item{max_qdelta_failure_rate}{Numeric in \verb{[0, 1]}: the largest share of observations whose
 Q_delta solve may fail and fall back to Q_delta = P0 (no shift for that observation, a bias
-toward the null). Default `0`: the first failure stops the estimate with the observation index
-and the solver's message. A positive value tolerates failures up to `rate * n` observations
-(each warned about and counted), then stops. `1` always falls back. The vanishing-threshold
+toward the null). Default \code{0}: the first failure stops the estimate with the observation index
+and the solver's message. A positive value tolerates failures up to \code{rate * n} observations
+(each warned about and counted), then stops. \code{1} always falls back. The vanishing-threshold
 estimator never falls back and always stops.}
 
-\item{qdelta_tol}{Numeric or `NULL`. Solver tolerance for the per-observation Q_delta problem;
-`NULL` (default) uses `QDELTA_TOLERANCE` for every sample size (it no longer relaxes above
+\item{qdelta_tol}{Numeric or \code{NULL}. Solver tolerance for the per-observation Q_delta problem;
+\code{NULL} (default) uses \code{QDELTA_TOLERANCE} for every sample size (it no longer relaxes above
 100,000 observations, which made the same stratum's estimate depend on whether it crossed that
 size).}
 }
 \value{
 List with same structure as \code{\link{estimate_qdelta_mean}}, plus:
 \describe{
-  \item{threshold_info}{List with epsilon_n, gamma, min_active, eps_constant}
-  \item{active_set_summary}{Summary of active sets (from \code{\link{summarize_active_sets}})}
-  \item{n_insufficient_active}{Number of observations with insufficient active treatments}
+\item{threshold_info}{List with epsilon_n, gamma, min_active, eps_constant}
+\item{active_set_summary}{Summary of active sets (from \code{\link{summarize_active_sets}})}
+\item{n_insufficient_active}{Number of observations with insufficient active treatments}
 }
 }
 \description{
 Implements vanishing threshold estimator with threshold-based active set
-selection. Uses ε_n → 0 with active sets K_{ε_n}(X) = {k: m_k(X) ∈ [ε_n, 1-ε_n]}
+selection. Uses ε_n → 0 with active sets \verb{K_\{ε_n\}(X) = \{k: m_k(X) ∈ [ε_n, 1-ε_n]\}}
 to satisfy margin conditions required for asymptotic normality.
 }
 \details{
-**Vanishing threshold approach:**
+\strong{Vanishing threshold approach:}
 
 The standard estimator assumes all treatments are active (m_k(X) bounded away from 0 and 1).
 When treatments have marginal propensities near boundaries, this assumption fails.
 
-Solution: Only use "active" treatments where m_k(X) ∈ [ε_n, 1-ε_n] with ε_n → 0.
+Solution: Only use "active" treatments where \verb{m_k(X) ∈ [ε_n, 1-ε_n]} with ε_n → 0.
 As n → ∞:
-- ε_n → 0 (more treatments become active)
-- But ε_n decreases slowly enough to maintain margin condition
+\itemize{
+\item ε_n → 0 (more treatments become active)
+\item But ε_n decreases slowly enough to maintain margin condition
+}
 
-**Rate conditions (from paper theory):**
+\strong{Rate conditions (from paper theory):}
 
 For asymptotic normality, need:
-1. γ > 1/(2β) where β is nuisance rate
-2. α ≥ max{1/4, 1/2 - γ(β-1)} where α is PS rate
+\enumerate{
+\item γ > 1/(2β) where β is nuisance rate
+\item \verb{α ≥ max\{1/4, 1/2 - γ(β-1)\}} where α is PS rate
+}
 
-**Automatic selection (if gamma/alpha not provided):**
-- γ = 0.3 (safe for β ≥ 2, i.e., parametric nuisances)
-- α = 0.4 (safe for most settings with γ = 0.3)
+\strong{Automatic selection (if gamma/alpha not provided):}
+\itemize{
+\item γ = 0.3 (safe for β ≥ 2, i.e., parametric nuisances)
+\item α = 0.4 (safe for most settings with γ = 0.3)
+}
 
-**Insufficient active treatments:**
+\strong{Insufficient active treatments:}
 
-Observations with < min_active treatments in [ε_n, 1-ε_n] contribute zero
+Observations with < min_active treatments in \verb{[ε_n, 1-ε_n]} contribute zero
 to the EIF. The user should verify this fraction is acceptable or adjust ε_n.
 
-**Comparison to standard estimator:**
-- Standard: Uses all treatments, assumes positivity everywhere
-- Vanishing threshold: Adapts to propensity patterns, more robust
+\strong{Comparison to standard estimator:}
+\itemize{
+\item Standard: Uses all treatments, assumes positivity everywhere
+\item Vanishing threshold: Adapts to propensity patterns, more robust
+}
 }
 \examples{
 \dontrun{

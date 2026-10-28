@@ -6,7 +6,7 @@
 #' EIF computation (`eif.R`, `eif_active.R`), and the estimation helper
 #' (`estimation.R`).
 #'
-#' [LEARN 2026-08-10] Before this file existed, h(x)/h'(x) were reimplemented
+#' `[LEARN 2026-08-10]` Before this file existed, h(x)/h'(x) were reimplemented
 #' independently at ~6 call sites across 4 files, with 4-5 different
 #' boundary-clipping conventions for reverse_kl and hellinger (chi2 and kl
 #' were unaffected -- chi2 has no singularity, kl's only guard is overflow

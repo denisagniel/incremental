@@ -35,12 +35,12 @@ find_max_delta_in_direction(
 \value{
 List containing:
 \describe{
-  \item{max_alpha}{Numeric scalar, maximum feasible scaling factor}
-  \item{max_delta}{Numeric vector (length m), maximum feasible delta = alpha * direction}
-  \item{direction}{Numeric vector (length m), the direction used (possibly normalized)}
-  \item{n_feasible}{Integer, number of observations feasible at maximum}
-  \item{iterations}{Integer, number of binary search iterations}
-  \item{converged}{Logical, whether binary search converged}
+\item{max_alpha}{Numeric scalar, maximum feasible scaling factor}
+\item{max_delta}{Numeric vector (length m), maximum feasible delta = alpha * direction}
+\item{direction}{Numeric vector (length m), the direction used (possibly normalized)}
+\item{n_feasible}{Integer, number of observations feasible at maximum}
+\item{iterations}{Integer, number of binary search iterations}
+\item{converged}{Logical, whether binary search converged}
 }
 }
 \description{
@@ -51,16 +51,20 @@ and allows finding maximum deltas along any direction in R^m.
 \details{
 This function performs a 1D search along a ray: delta = α * direction,
 starting from α = 0 (if all direction components ≥ 0) or α where
-delta[k] = 1 for the most restrictive k.
+\code{delta[k] = 1} for the most restrictive k.
 
 The direction vector can be any values, but must satisfy:
-- If direction[k] < 0: delta[k] = 1 + α * direction[k] ≥ 1 for feasible α
-- All components of (α * direction) must keep delta[k] ≥ 1
+\itemize{
+\item If \code{direction[k] < 0}: \verb{delta[k] = 1 + α * direction[k] ≥ 1} for feasible α
+\item All components of (α * direction) must keep \verb{delta[k] ≥ 1}
+}
 
 Common use cases:
-- Uniform: direction = rep(1, m)
-- Single treatment: direction = c(0, ..., 1, ..., 0) (1 in position k)
-- Trade-offs: direction = c(1, -0.5, 0, ...) (increase A1, decrease A2)
+\itemize{
+\item Uniform: direction = rep(1, m)
+\item Single treatment: direction = c(0, ..., 1, ..., 0) (1 in position k)
+\item Trade-offs: direction = c(1, -0.5, 0, ...) (increase A1, decrease A2)
+}
 }
 \examples{
 \dontrun{

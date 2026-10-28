@@ -22,11 +22,13 @@ inference_qdelta_mean(
 }
 \value{
 List containing:
-  - estimate: point estimate
-  - se: standard error
-  - ci_lower: lower confidence bound
-  - ci_upper: upper confidence bound
-  - confidence_level: confidence level used
+\itemize{
+\item estimate: point estimate
+\item se: standard error
+\item ci_lower: lower confidence bound
+\item ci_upper: upper confidence bound
+\item confidence_level: confidence level used
+}
 }
 \description{
 Computes confidence intervals for the counterfactual mean under incremental

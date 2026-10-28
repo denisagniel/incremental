@@ -29,11 +29,11 @@ find_max_uniform_delta(
 \value{
 List containing:
 \describe{
-  \item{max_delta}{Numeric scalar, maximum feasible uniform delta value}
-  \item{delta_vector}{Numeric vector (length m), the maximum feasible delta as a vector}
-  \item{n_feasible}{Integer, number of observations feasible at maximum (should be n)}
-  \item{iterations}{Integer, number of binary search iterations}
-  \item{converged}{Logical, whether binary search converged within tolerance}
+\item{max_delta}{Numeric scalar, maximum feasible uniform delta value}
+\item{delta_vector}{Numeric vector (length m), the maximum feasible delta as a vector}
+\item{n_feasible}{Integer, number of observations feasible at maximum (should be n)}
+\item{iterations}{Integer, number of binary search iterations}
+\item{converged}{Logical, whether binary search converged within tolerance}
 }
 }
 \description{

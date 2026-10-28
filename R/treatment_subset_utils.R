@@ -140,13 +140,13 @@ create_a_bar_matrix <- function(vectors, active_indices) {
 #'   Must sum to 1 across each row.
 #' @param m Integer, number of treatments
 #'
-#' @return Matrix (n x m), marginal probabilities where [i,k] = P(A_k=1|X_i)
+#' @return Matrix (n x m), marginal probabilities where `[i,k] = P(A_k=1|X_i)`
 #'
 #' @details
 #' For each treatment k, the marginal probability is computed by summing the
 #' joint probabilities over all treatment combinations where A_k = 1:
 #'
-#' m_k(X_i) = sum_{a: a_k=1} pi_a(X_i)
+#' `m_k(X_i) = sum_{a: a_k=1} pi_a(X_i)`
 #'
 #' This is used in active set thresholding to identify which treatments have
 #' marginal propensities in (epsilon, 1-epsilon) and are therefore "active" for
@@ -225,7 +225,7 @@ extract_marginal_probabilities <- function(propensity_scores, m) {
 #' @details
 #' The constraint Jacobian is:
 #'
-#' Omega = sum_{a in A} pi_a * h'(a_bar; lambda) * a_bar * a_bar^T
+#' `Omega = sum_{a in A} pi_a * h'(a_bar; lambda) * a_bar * a_bar^T`
 #'
 #' where h'() is the derivative of the h-function with respect to the linear term.
 #' The dimension depends on the number of active constraints: if |active| = k,
@@ -433,7 +433,7 @@ extend_eif_to_full <- function(eif_reduced, indices_in_full, n_full) {
 #'
 #' @details
 #' When working with reduced treatment sets, it's helpful to have explicit mapping
-#' between original and reduced indices. For example, if active treatments are {2,5,7},
+#' between original and reduced indices. For example, if active treatments are `{2,5,7}`,
 #' the mapping is: 2→1, 5→2, 7→3.
 #'
 #' @examples

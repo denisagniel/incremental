@@ -46,12 +46,14 @@ simulate_vector_treatment_data(
 }
 \value{
 List containing:
-  - data: tibble with columns X1, ..., Xp, A1, ..., Am, Y, R (missing indicator)
-  - true_propensity: matrix (n x 2^m) of true propensity scores for each treatment combination.
-    Columns are named with format "A1=x_A2=y_..." indicating which treatment combination each column represents.
-  - true_outcome: matrix (n x 2^m) of true outcome means for each treatment combination.
-    Columns are named with format "A1=x_A2=y_..." indicating which treatment combination each column represents.
-  - dgp_params: parameters used in data generation
+\itemize{
+\item data: tibble with columns X1, ..., Xp, A1, ..., Am, Y, R (missing indicator)
+\item true_propensity: matrix (n x 2^m) of true propensity scores for each treatment combination.
+Columns are named with format "A1=x_A2=y_..." indicating which treatment combination each column represents.
+\item true_outcome: matrix (n x 2^m) of true outcome means for each treatment combination.
+Columns are named with format "A1=x_A2=y_..." indicating which treatment combination each column represents.
+\item dgp_params: parameters used in data generation
+}
 }
 \description{
 Simulation utilities for generating synthetic data with multiple binary

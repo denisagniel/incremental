@@ -25,17 +25,17 @@ validate_columns(
 when eligibility is not used.}
 }
 \value{
-Invisibly `TRUE`. Called for its side effect (an error on failure).
+Invisibly \code{TRUE}. Called for its side effect (an error on failure).
 }
 \description{
 Asserts that all named treatment, covariate, outcome, and (optionally)
-eligibility columns exist in `data`, failing loudly with a message that lists
+eligibility columns exist in \code{data}, failing loudly with a message that lists
 every missing column. This is the single validation point used by the
 estimation entry points, which require explicit column specifications rather
 than auto-detecting columns by name pattern.
 }
 \details{
-Validation checks for the *presence* of the required columns only; it does not
+Validation checks for the \emph{presence} of the required columns only; it does not
 forbid extra columns. The data legitimately carries id, missingness, date, and
 eligibility columns (and may carry treatments outside the analysis set); the
 estimators use exactly the named columns and ignore the rest.

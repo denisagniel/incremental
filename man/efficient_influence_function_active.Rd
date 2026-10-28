@@ -42,7 +42,7 @@ P(A=a|X) for all 2^m treatment combinations. Rows must sum to 1.}
 values required. Represents odds ratios for marginal treatment probabilities.}
 
 \item{outcome_means}{Numeric matrix (n x 2^m) of conditional outcome means
-E[Y|A=a,X] for all treatment combinations. Required for EIF-based estimation.}
+\verb{E[Y|A=a,X]} for all treatment combinations. Required for EIF-based estimation.}
 
 \item{divergence}{Character, divergence measure for Q_delta optimization.
 Options: "kl" (default, most stable), "reverse_kl", "chi2", "hellinger".}
@@ -53,10 +53,10 @@ Pre-computing can improve performance when calling multiple times.}
 
 \item{active_sets}{List returned by \code{\link{compute_active_sets}} containing:
 \itemize{
-  \item active_matrix: Logical matrix (n x m) indicating active treatments
-  \item active_indices: List of length n with active treatment indices per obs
-  \item n_active: Integer vector with number of active treatments per obs
-  \item sufficient_active: Logical vector indicating sufficient active treatments
+\item active_matrix: Logical matrix (n x m) indicating active treatments
+\item active_indices: List of length n with active treatment indices per obs
+\item n_active: Integer vector with number of active treatments per obs
+\item sufficient_active: Logical vector indicating sufficient active treatments
 }}
 
 \item{feasibility_check}{Logical, perform delta feasibility check before
@@ -65,29 +65,33 @@ Default: FALSE (faster).}
 }
 \value{
 Same structure as \code{\link{efficient_influence_function}}, with
-  additional components:
-  \item{active_sets}{The input active_sets list}
-  \item{n_insufficient_active}{Number of observations with insufficient active treatments}
+additional components:
+\item{active_sets}{The input active_sets list}
+\item{n_insufficient_active}{Number of observations with insufficient active treatments}
 }
 \description{
 Computes EIF for vector incremental effects with threshold-based active set
 selection. Uses reduced-dimension Ω based on active constraints per observation.
 }
 \details{
-**Difference from standard EIF:**
-- Uses pre-computed active sets K_ε(X) = {k: m_k(X) ∈ [ε, 1-ε]}
-- Computes reduced-dimension Ω based on active constraints only
-- Observations with insufficient active treatments handled specially
+\strong{Difference from standard EIF:}
+\itemize{
+\item Uses pre-computed active sets \verb{K_ε(X) = \{k: m_k(X) ∈ [ε, 1-ε]\}}
+\item Computes reduced-dimension Ω based on active constraints only
+\item Observations with insufficient active treatments handled specially
+}
 
-**Active set motivation:**
+\strong{Active set motivation:}
 Treatments with marginal propensities near 0 or 1 provide little information
 and can make Ω singular. Restricting to active set:
-- Improves numerical stability
-- Reduces effective dimension
-- Satisfies margin conditions for asymptotic theory
+\itemize{
+\item Improves numerical stability
+\item Reduces effective dimension
+\item Satisfies margin conditions for asymptotic theory
+}
 
-**Insufficient active treatments:**
-If active_sets$sufficient_active[i] = FALSE, the EIF for that observation
+\strong{Insufficient active treatments:}
+If \code{active_sets$sufficient_active[i]} is \code{FALSE}, the EIF for that observation
 is set to zero (no contribution). The user should verify this is acceptable
 or adjust the threshold ε.
 }

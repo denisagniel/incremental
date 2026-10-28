@@ -18,7 +18,7 @@ nuisance_cache_stats(cache)
 }
 \value{
 A one-row \code{data.frame} with entry counts, hit/miss/fit counts,
-  cumulative fit seconds, and the approximate size of the stored matrices in MB.
+cumulative fit seconds, and the approximate size of the stored matrices in MB.
 }
 \description{
 Reports how much the cache is actually being used. \code{n_ps_fit} /

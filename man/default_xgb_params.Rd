@@ -2,79 +2,14 @@
 % Please edit documentation in R/nuisance_estimation.R
 \name{default_xgb_params}
 \alias{default_xgb_params}
-\title{Train XGBoost model with early stopping}
+\title{Default tuned XGBoost regularization parameters (internal)}
 \usage{
 default_xgb_params()
 }
-\arguments{
-\item{X}{Numeric matrix of features}
-
-\item{y}{Numeric vector of labels}
-
-\item{params}{List of xgboost parameters (must include objective). Any of the
-tuned regularization defaults below (max_depth, eta, subsample,
-colsample_bytree, min_child_weight) supplied here override the default.}
-
-\item{nrounds_max}{Maximum number of boosting rounds (default 500)}
-
-\item{early_stopping_rounds}{Stop if no improvement for this many rounds (default 10)}
-
-\item{eval_fraction}{Fraction of data used for early stopping evaluation (default 0.2)}
-}
-\value{
-Trained xgboost model
-}
 \description{
-Internal helper that trains an xgboost model using an 80/20 internal
-train/validation split for early stopping. Prevents overfitting that
-occurs with fixed nrounds on small datasets.
+Single source of truth for the conservative regularization defaults used by
+every XGBoost nuisance fit. Callers thread a user-supplied \code{xgb_params} list
+through the estimators; \code{NULL} (the default) selects these values. See
+\code{train_xgboost_early_stop} @details for the rationale.
 }
-\details{
-Regularization defaults are deliberately more conservative than xgboost's own
-(which are max_depth = 6, eta = 0.3). Shallow trees with a small learning rate
-and row/column subsampling substantially reduce the finite-sample
-regularization bias of the fitted nuisance functions, which otherwise does not
-vanish fast enough to clear the o_p(n^{-1/2}) product-rate condition and
-degrades confidence-interval coverage at large n (validated in
-sims/study2/analysis; the tuned learner tracks a random forest and the
-oracle-nuisance floor, whereas the xgboost defaults do not). Callers may
-override any default by supplying it in `params`.
-}
-\keyword{(internal)}
-\keyword{(the}
-\keyword{@details}
-\keyword{Callers}
-\keyword{Default}
-\keyword{See}
-\keyword{Single}
-\keyword{XGBoost}
-\keyword{\code{train_xgboost_early_stop}}
-\keyword{`NULL`}
-\keyword{`xgb_params`}
-\keyword{a}
-\keyword{by}
-\keyword{conservative}
-\keyword{default)}
-\keyword{defaults}
-\keyword{estimators;}
-\keyword{every}
-\keyword{fit.}
-\keyword{for}
 \keyword{internal}
-\keyword{list}
-\keyword{nuisance}
-\keyword{of}
-\keyword{parameters}
-\keyword{rationale.}
-\keyword{regularization}
-\keyword{selects}
-\keyword{source}
-\keyword{the}
-\keyword{these}
-\keyword{thread}
-\keyword{through}
-\keyword{truth}
-\keyword{tuned}
-\keyword{used}
-\keyword{user-supplied}
-\keyword{values.}

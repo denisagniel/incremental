@@ -18,9 +18,9 @@ handle_zero_propensities(
 
 \item{m}{Number of treatments (constraints)}
 
-\item{combination_matrix}{Optional `2^m x m` matrix of all binary treatment
-combinations, as returned by [generate_binary_vectors()]. `NULL` (default)
-generates it internally; `newton_qdelta()` threads down the matrix it already
+\item{combination_matrix}{Optional \verb{2^m x m} matrix of all binary treatment
+combinations, as returned by \code{\link[=generate_binary_vectors]{generate_binary_vectors()}}. \code{NULL} (default)
+generates it internally; \code{newton_qdelta()} threads down the matrix it already
 built so this function does not regenerate it per observation.}
 }
 \value{

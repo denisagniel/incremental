@@ -28,7 +28,7 @@ treatments are dropped from the active set.
 \details{
 The constraint Jacobian is:
 
-Omega = sum_{a in A} pi_a * h'(a_bar; lambda) * a_bar * a_bar^T
+\verb{Omega = sum_\{a in A\} pi_a * h'(a_bar; lambda) * a_bar * a_bar^T}
 
 where h'() is the derivative of the h-function with respect to the linear term.
 The dimension depends on the number of active constraints: if |active| = k,

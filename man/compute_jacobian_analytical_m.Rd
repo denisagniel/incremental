@@ -27,7 +27,7 @@ compute_jacobian_analytical_m(
 m x m numeric matrix
 }
 \description{
-Matrix form of the external-normalization (`fix_lambda0 = TRUE`) Jacobian.
+Matrix form of the external-normalization (\code{fix_lambda0 = TRUE}) Jacobian.
 With \eqn{u = \lambda_0 + B\lambda_a}, \eqn{w = p_0 \odot h'(u)},
 \eqn{Z = \sum_k q_k} and \eqn{\bar q = q / Z}:
 

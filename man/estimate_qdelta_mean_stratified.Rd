@@ -37,10 +37,12 @@ estimate_qdelta_mean_stratified(
 }
 \arguments{
 \item{data}{Data frame or tibble with columns:
-- Treatment columns: A1, A2, ..., Am (binary 0/1)
-- Eligibility columns: elig_A1, elig_A2, ..., elig_Am (binary 0/1)
-- Covariate columns: X1, X2, ..., Xp (numeric)
-- Outcome column: Y (numeric)}
+\itemize{
+\item Treatment columns: A1, A2, ..., Am (binary 0/1)
+\item Eligibility columns: elig_A1, elig_A2, ..., elig_Am (binary 0/1)
+\item Covariate columns: X1, X2, ..., Xp (numeric)
+\item Outcome column: Y (numeric)
+}}
 
 \item{delta}{Numeric vector of length m, target marginal changes (odds ratios).
 Applied only to eligible treatments within each pattern.}
@@ -58,10 +60,10 @@ Length defines m; treatment columns are derived per pattern.}
 \item{min_stratum_size}{Integer, minimum observations per pattern to include
 in estimation. Patterns with fewer observations are excluded. Default: 100.}
 
-\item{min_realized_coverage}{Numeric in [0, 1], minimum fraction of the
+\item{min_realized_coverage}{Numeric in \verb{[0, 1]}, minimum fraction of the
 stratified sample that must be covered by SUCCESSFULLY-estimated patterns.
 Unlike the pre-estimation feasibility check (which only verifies identified
-patterns meet `min_stratum_size`), this reflects estimation failures: if
+patterns meet \code{min_stratum_size}), this reflects estimation failures: if
 patterns fail and realized coverage drops below this threshold, the function
 aborts rather than silently returning an estimate over a non-representative
 subset. Set to 0 to disable the gate. Default: 0.8.}
@@ -107,7 +109,7 @@ pattern (eligibility subsetting is separate from and prior to thresholding).
 Forwarded to \code{\link{estimate_pattern_effect}}. Default "none" preserves
 prior behavior.}
 
-\item{gamma}{Numeric, threshold rate for the vanishing estimator (ε_n = C n^{-γ}).
+\item{gamma}{Numeric, threshold rate for the vanishing estimator (\verb{ε_n = C n^\{-γ\}}).
 Only used when threshold_type = "vanishing". Default NULL (auto-selected).}
 
 \item{epsilon}{Numeric, fixed threshold for the adaptive estimator. Only used
@@ -136,80 +138,88 @@ before).}
 cache keying (e.g. \code{"total"}). Ignored when \code{nuisance_cache} is
 NULL.}
 
-\item{max_qdelta_failure_rate}{Numeric in `[0, 1]`: the largest share of observations whose
+\item{max_qdelta_failure_rate}{Numeric in \verb{[0, 1]}: the largest share of observations whose
 Q_delta solve may fail and fall back to Q_delta = P0 (no shift for that observation, a bias
-toward the null). Default `0`: the first failure stops the estimate with the observation index
-and the solver's message. A positive value tolerates failures up to `rate * n` observations
-(each warned about and counted), then stops. `1` always falls back. The vanishing-threshold
+toward the null). Default \code{0}: the first failure stops the estimate with the observation index
+and the solver's message. A positive value tolerates failures up to \code{rate * n} observations
+(each warned about and counted), then stops. \code{1} always falls back. The vanishing-threshold
 estimator never falls back and always stops.}
 
-\item{qdelta_tol}{Numeric or `NULL`. Solver tolerance for the per-observation Q_delta problem;
-`NULL` (default) uses `QDELTA_TOLERANCE` for every sample size (it no longer relaxes above
+\item{qdelta_tol}{Numeric or \code{NULL}. Solver tolerance for the per-observation Q_delta problem;
+\code{NULL} (default) uses \code{QDELTA_TOLERANCE} for every sample size (it no longer relaxes above
 100,000 observations, which made the same stratum's estimate depend on whether it crossed that
 size).}
 }
 \value{
 List with class "qdelta_stratified" containing:
 \describe{
-  \item{estimate}{Numeric, aggregated estimate ψ = Σ p_k ψ_k}
-  \item{se}{Numeric, standard error from delta method}
-  \item{ci_lower}{Numeric, lower confidence bound}
-  \item{ci_upper}{Numeric, upper confidence bound}
-  \item{p_value}{Numeric, two-sided p-value for H0: ψ = 0}
-  \item{eif_values}{Numeric vector (length n), centered aggregated EIF}
-  \item{pattern_summaries}{Data frame with per-pattern estimates and weights}
-  \item{eligibility_patterns}{List from identify_eligibility_patterns()}
-  \item{feasibility_check}{List from validate_stratification_feasibility()}
-  \item{n_patterns_used}{Integer, number of patterns with successful estimation}
-  \item{coverage}{Numeric, proportion of sample in successfully estimated patterns}
-  \item{delta}{Numeric vector, input delta values}
-  \item{divergence}{Character, divergence measure used}
-  \item{estimator}{Character, estimator used}
-  \item{n}{Integer, total sample size}
-  \item{m}{Integer, number of treatments}
+\item{estimate}{Numeric, aggregated estimate ψ = Σ p_k ψ_k}
+\item{se}{Numeric, standard error from delta method}
+\item{ci_lower}{Numeric, lower confidence bound}
+\item{ci_upper}{Numeric, upper confidence bound}
+\item{p_value}{Numeric, two-sided p-value for H0: ψ = 0}
+\item{eif_values}{Numeric vector (length n), centered aggregated EIF}
+\item{pattern_summaries}{Data frame with per-pattern estimates and weights}
+\item{eligibility_patterns}{List from identify_eligibility_patterns()}
+\item{feasibility_check}{List from validate_stratification_feasibility()}
+\item{n_patterns_used}{Integer, number of patterns with successful estimation}
+\item{coverage}{Numeric, proportion of sample in successfully estimated patterns}
+\item{delta}{Numeric vector, input delta values}
+\item{divergence}{Character, divergence measure used}
+\item{estimator}{Character, estimator used}
+\item{n}{Integer, total sample size}
+\item{m}{Integer, number of treatments}
 }
 }
 \description{
-Estimates E[Y^{Q_delta}] when treatments are only defined for subsets of
+Estimates \code{E[Y^{Q_delta}]} when treatments are only defined for subsets of
 observations (e.g., medication adherence only measurable if prescribed).
 Stratifies by eligibility pattern, estimates within each pattern, and
 aggregates via weighted averaging with delta method inference.
 
-**When to use this function:**
-- Treatments are only defined/eligible for some observations
-- You have eligibility indicators (elig_A1, elig_A2, etc.)
-- Want to estimate: "What if we improved treatment quality/adherence
-  (by factor δ) conditional on current eligibility patterns?"
+\strong{When to use this function:}
+\itemize{
+\item Treatments are only defined/eligible for some observations
+\item You have eligibility indicators (elig_A1, elig_A2, etc.)
+\item Want to estimate: "What if we improved treatment quality/adherence
+(by factor δ) conditional on current eligibility patterns?"
+}
 
-**When NOT to use this function:**
-- All treatments eligible for all observations → use estimate_qdelta_mean()
-- Eligibility is rare and you want to include as covariate → use estimate_qdelta_mean()
-- Interested in changing who gets eligible → different estimand (out of scope)
+\strong{When NOT to use this function:}
+\itemize{
+\item All treatments eligible for all observations → use estimate_qdelta_mean()
+\item Eligibility is rare and you want to include as covariate → use estimate_qdelta_mean()
+\item Interested in changing who gets eligible → different estimand (out of scope)
+}
 }
 \details{
-**Workflow:**
-1. Identifies unique eligibility patterns in the data
-2. Validates that stratification is feasible (enough patterns, enough observations)
-3. For each pattern k:
-   - Subsets to observations with pattern k
-   - Filters to eligible treatments only
-   - Renames treatments to A1, ..., A_m_k (consecutive)
-   - Calls estimate_qdelta_mean() with reduced dimension
-   - Extends EIF to full dataset (zeros for other observations)
-4. Aggregates: ψ = Σ_k p_k ψ_k with delta method variance
+\strong{Workflow:}
+\enumerate{
+\item Identifies unique eligibility patterns in the data
+\item Validates that stratification is feasible (enough patterns, enough observations)
+\item For each pattern k:
+\itemize{
+\item Subsets to observations with pattern k
+\item Filters to eligible treatments only
+\item Renames treatments to A1, ..., A_m_k (consecutive)
+\item Calls estimate_qdelta_mean() with reduced dimension
+\item Extends EIF to full dataset (zeros for other observations)
+}
+\item Aggregates: ψ = Σ_k p_k ψ_k with delta method variance
+}
 
-**Estimand interpretation:**
-The estimated quantity is E[Y^{Q_delta | Z}] where Z = (Z_1, ..., Z_m)
+\strong{Estimand interpretation:}
+The estimated quantity is \code{E[Y^{Q_delta | Z}]} where Z = (Z_1, ..., Z_m)
 are eligibility indicators. This answers: "What if we improved treatment
 quality/adherence by factor δ_k for treatments k that are currently eligible,
 without changing eligibility itself?"
 
-**Treatment renaming:**
+\strong{Treatment renaming:}
 Within each pattern, only eligible treatments are used. These are renamed
 to consecutive indices A1, A2, ... for estimation, then results are mapped
 back to original indices.
 
-**Variance estimation:**
+\strong{Variance estimation:}
 The pooled estimator is the mean of the observation-level influence values,
 so its influence function is phi_i - psi (see \code{.combine_patterns}). Each
 pattern's influence function is rescaled by 1/p_k and a between-pattern term

@@ -20,9 +20,11 @@ estimate_outcome_models(
 }
 \arguments{
 \item{data}{Data frame with columns:
-- Treatment: A1, A2, ..., Am (binary 0/1)
-- Covariates: X1, X2, ..., Xp (numeric)
-- Outcome: Y (numeric)}
+\itemize{
+\item Treatment: A1, A2, ..., Am (binary 0/1)
+\item Covariates: X1, X2, ..., Xp (numeric)
+\item Outcome: Y (numeric)
+}}
 
 \item{treatment_cols}{Character vector of treatment column names (required).}
 
@@ -31,17 +33,19 @@ estimate_outcome_models(
 \item{outcome_col}{Character scalar, outcome column name. Default "Y".}
 
 \item{method}{Character, regression method:
-- **"glm"** (default): Linear regression via lm(). Fast, interpretable. Works well
-  for continuous Y. Fits separate model per combination (if n_a >= min_obs).
-- **"gam"**: Generalized additive models via mgcv::gam(). Flexible smoothing.
-  Good for non-linear covariate effects.
-- **"randomforest"**: Random forest via randomForest::randomForest(). Highly
-  flexible, handles interactions automatically. Recommended for complex outcome surfaces.
-- **"xgboost"**: Gradient boosting via xgboost::xgb.train(). Fast, flexible,
-  handles nonlinearities and skewed outcomes (e.g., costs). Recommended for
-  high-dimensional data. Consistent with xgboost-based PS estimation.
-- **"superlearner"**: Ensemble via SuperLearner. Adapts to data complexity.
-  Requires SuperLearner package and sl_library specification.}
+\itemize{
+\item \strong{"glm"} (default): Linear regression via lm(). Fast, interpretable. Works well
+for continuous Y. Fits separate model per combination (if n_a >= min_obs).
+\item \strong{"gam"}: Generalized additive models via mgcv::gam(). Flexible smoothing.
+Good for non-linear covariate effects.
+\item \strong{"randomforest"}: Random forest via randomForest::randomForest(). Highly
+flexible, handles interactions automatically. Recommended for complex outcome surfaces.
+\item \strong{"xgboost"}: Gradient boosting via xgboost::xgb.train(). Fast, flexible,
+handles nonlinearities and skewed outcomes (e.g., costs). Recommended for
+high-dimensional data. Consistent with xgboost-based PS estimation.
+\item \strong{"superlearner"}: Ensemble via SuperLearner. Adapts to data complexity.
+Requires SuperLearner package and sl_library specification.
+}}
 
 \item{cross_fit}{Logical, use cross-fitting for sample splitting. Reduces
 overfitting when using flexible methods. Default: FALSE. Recommended TRUE
@@ -53,14 +57,16 @@ for randomforest/superlearner.}
 E.g., c("SL.glm", "SL.gam", "SL.randomForest"). Required if method = "superlearner".}
 
 \item{outcome_fit}{Character, how to model the outcome across treatments:
-- **"pooled"** (default): a single model on covariates and treatment
-  indicators, predicting E[Y | A = a, X] for each combination by setting the
-  treatment columns to a. Borrows strength across the full sample; robust as
-  the treatment space grows. Lower mu-hat RMSE than stratified for m >= 3.
-- **"stratified"**: a separate model per treatment combination (assumption-free
-  in treatment). Best when every combination is well populated (small m, large
-  n). Falls back to pooled with a warning if 2^m > max_combinations, to avoid
-  collapsing sparse combinations to the grand mean.}
+\itemize{
+\item \strong{"pooled"} (default): a single model on covariates and treatment
+indicators, predicting \verb{E[Y | A = a, X]} for each combination by setting the
+treatment columns to a. Borrows strength across the full sample; robust as
+the treatment space grows. Lower mu-hat RMSE than stratified for m >= 3.
+\item \strong{"stratified"}: a separate model per treatment combination (assumption-free
+in treatment). Best when every combination is well populated (small m, large
+n). Falls back to pooled with a warning if 2^m > max_combinations, to avoid
+collapsing sparse combinations to the grand mean.
+}}
 
 \item{max_combinations}{Integer, only used when outcome_fit = "stratified":
 if 2^m exceeds it, the stratified fit falls back to pooled. Default: 16.}
@@ -68,27 +74,27 @@ if 2^m exceeds it, the stratified fit falls back to pooled. Default: 16.}
 \value{
 List containing:
 \describe{
-  \item{outcome_means}{Numeric matrix (n x 2^m), E[Y|A=a,X] predictions for all combos}
-  \item{models}{List of fitted models (one per combination if feasible, else single model)}
-  \item{method}{Character, method used (for reference)}
-  \item{treatment_combinations}{Matrix (2^m x m), binary treatment patterns}
-  \item{cross_fit}{Logical, whether cross-fitting was used}
+\item{outcome_means}{Numeric matrix (n x 2^m), \verb{E[Y|A=a,X]} predictions for all combos}
+\item{models}{List of fitted models (one per combination if feasible, else single model)}
+\item{method}{Character, method used (for reference)}
+\item{treatment_combinations}{Matrix (2^m x m), binary treatment patterns}
+\item{cross_fit}{Logical, whether cross-fitting was used}
 }
 }
 \description{
-Estimates conditional outcome means E[Y | A = a, X] for all 2^m treatment
+Estimates conditional outcome means \verb{E[Y | A = a, X]} for all 2^m treatment
 combinations. Fits stratified models (one per combination) when feasible, or
 a single model with treatment interactions for high-dimensional cases.
 Required for EIF-based (one-step) estimation.
 }
 \details{
-**Modeling approach:** By default (`outcome_fit = "pooled"`) the function fits a
+\strong{Modeling approach:} By default (\code{outcome_fit = "pooled"}) the function fits a
 single outcome regression on covariates and treatment indicators, then predicts
-E[Y | A = a, X] for each combination a = (a_1, ..., a_m) by holding the treatment
+\verb{E[Y | A = a, X]} for each combination a = (a_1, ..., a_m) by holding the treatment
 columns at a. This borrows strength across the whole sample and remains stable as
 the treatment space grows.
 
-**Stratified alternative:** `outcome_fit = "stratified"` instead fits a separate
+\strong{Stratified alternative:} \code{outcome_fit = "stratified"} instead fits a separate
 model per combination, using only observations with that treatment pattern. This
 makes no assumptions about how the outcome surface changes across treatments, which
 can help when every combination is well populated. Its weakness is sparse data:
@@ -98,21 +104,27 @@ starvation---and the resulting same-signed bias---grows with m, so stratified fi
 are only recommended for small m with large n. Diagnostics show pooled attains lower
 mu-hat RMSE for m >= 3 (see explorations/diagnostics/m6_stratified_vs_pooled.R).
 
-**Method selection:**
-- Parametric outcome model: Use "glm"
-- Non-linear covariate effects: Use "gam", "randomforest", or "xgboost"
-- Skewed outcomes (e.g., costs): Use "xgboost" or "randomforest"
-- Unknown complexity: Use "xgboost", "randomforest", or "superlearner"
-- Consistency with PS method: If using sequential + xgboost for PS, use "xgboost" for outcomes
+\strong{Method selection:}
+\itemize{
+\item Parametric outcome model: Use "glm"
+\item Non-linear covariate effects: Use "gam", "randomforest", or "xgboost"
+\item Skewed outcomes (e.g., costs): Use "xgboost" or "randomforest"
+\item Unknown complexity: Use "xgboost", "randomforest", or "superlearner"
+\item Consistency with PS method: If using sequential + xgboost for PS, use "xgboost" for outcomes
+}
 
-**Quality checks:** The function validates outputs:
-- Checks for non-finite predictions
-- Warns if combinations have no observations (modeling issue)
+\strong{Quality checks:} The function validates outputs:
+\itemize{
+\item Checks for non-finite predictions
+\item Warns if combinations have no observations (modeling issue)
+}
 
-**Missing combinations:** For sparse data (m >= 5), some combinations may have
+\strong{Missing combinations:} For sparse data (m >= 5), some combinations may have
 few observations. Models still predict for all combinations using covariate
 information.
-  - treatment_combinations: matrix of treatment combinations
+\itemize{
+\item treatment_combinations: matrix of treatment combinations
+}
 
 Random number generation: The caller is responsible for setting the random
 seed before calling this function (e.g., set.seed(123)) to ensure reproducibility.

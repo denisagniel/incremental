@@ -15,10 +15,12 @@ validate_active_set(active_indices, m, min_active = 1)
 }
 \value{
 List with validation results:
-  - valid: Logical, whether configuration is valid
-  - n_active: Number of active treatments
-  - issues: Character vector of any problems found
-  - warnings: Character vector of potential issues
+\itemize{
+\item valid: Logical, whether configuration is valid
+\item n_active: Number of active treatments
+\item issues: Character vector of any problems found
+\item warnings: Character vector of potential issues
+}
 }
 \description{
 Checks that an active set configuration is valid and provides diagnostics.
@@ -26,10 +28,12 @@ Used to catch common errors when working with treatment subsets.
 }
 \details{
 Checks for:
-- Empty active set (usually an error)
-- Out-of-range indices
-- Duplicates
-- Very few active treatments (may be valid but worth flagging)
+\itemize{
+\item Empty active set (usually an error)
+\item Out-of-range indices
+\item Duplicates
+\item Very few active treatments (may be valid but worth flagging)
+}
 }
 \examples{
 \dontrun{

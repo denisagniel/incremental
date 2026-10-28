@@ -58,7 +58,7 @@ estimator, no thresholding), "vanishing" (vanishing threshold ε_n → 0), or
 "adaptive" (fixed threshold ε with adaptive delta). Forwarded to
 \code{\link{estimate_qdelta_mean}}. Default "none" preserves prior behavior.}
 
-\item{gamma}{Numeric, threshold rate for the vanishing estimator (ε_n = C n^{-γ}).
+\item{gamma}{Numeric, threshold rate for the vanishing estimator (\verb{ε_n = C n^\{-γ\}}).
 Only used when threshold_type = "vanishing". Default NULL (auto-selected).}
 
 \item{epsilon}{Numeric, fixed threshold for the adaptive estimator. Only used
@@ -90,29 +90,29 @@ pattern loop. Required when \code{nuisance_cache} is supplied: it
 namespaces the per-fit seeds so they do not depend on how much RNG earlier
 patterns consumed. Ignored otherwise.}
 
-\item{max_qdelta_failure_rate}{Numeric in `[0, 1]`: the largest share of observations whose
+\item{max_qdelta_failure_rate}{Numeric in \verb{[0, 1]}: the largest share of observations whose
 Q_delta solve may fail and fall back to Q_delta = P0 (no shift for that observation, a bias
-toward the null). Default `0`: the first failure stops the estimate with the observation index
-and the solver's message. A positive value tolerates failures up to `rate * n` observations
-(each warned about and counted), then stops. `1` always falls back. The vanishing-threshold
+toward the null). Default \code{0}: the first failure stops the estimate with the observation index
+and the solver's message. A positive value tolerates failures up to \code{rate * n} observations
+(each warned about and counted), then stops. \code{1} always falls back. The vanishing-threshold
 estimator never falls back and always stops.}
 
-\item{qdelta_tol}{Numeric or `NULL`. Solver tolerance for the per-observation Q_delta problem;
-`NULL` (default) uses `QDELTA_TOLERANCE` for every sample size (it no longer relaxes above
+\item{qdelta_tol}{Numeric or \code{NULL}. Solver tolerance for the per-observation Q_delta problem;
+\code{NULL} (default) uses \code{QDELTA_TOLERANCE} for every sample size (it no longer relaxes above
 100,000 observations, which made the same stratum's estimate depend on whether it crossed that
 size).}
 }
 \value{
 List containing:
 \describe{
-  \item{success}{Logical, whether estimation succeeded}
-  \item{estimate}{Numeric, estimated ψ_k (or NA if failed)}
-  \item{se}{Numeric, standard error (or NA if failed)}
-  \item{eif_values_extended}{Numeric vector (length n), EIF extended to full dataset with zeros}
-  \item{n_obs}{Integer, number of observations in pattern}
-  \item{n_eligible}{Integer, number of eligible treatments}
-  \item{treatment_mapping}{List with original and reduced indices}
-  \item{error_message}{Character, error message if failed (or NA if success)}
+\item{success}{Logical, whether estimation succeeded}
+\item{estimate}{Numeric, estimated ψ_k (or NA if failed)}
+\item{se}{Numeric, standard error (or NA if failed)}
+\item{eif_values_extended}{Numeric vector (length n), EIF extended to full dataset with zeros}
+\item{n_obs}{Integer, number of observations in pattern}
+\item{n_eligible}{Integer, number of eligible treatments}
+\item{treatment_mapping}{List with original and reduced indices}
+\item{error_message}{Character, error message if failed (or NA if success)}
 }
 }
 \description{
@@ -128,9 +128,9 @@ thresholding at the matrix level (combination-specific active sets).
 
 Both approaches use shared utilities from treatment_subset_utils.R:
 \itemize{
-  \item \code{\link{validate_active_set}} - validate treatment indices
-  \item \code{\link{map_treatment_indices}} - track original→reduced mapping
-  \item \code{\link{extend_eif_to_full}} - extend subset EIF to full dataset
+\item \code{\link{validate_active_set}} - validate treatment indices
+\item \code{\link{map_treatment_indices}} - track original→reduced mapping
+\item \code{\link{extend_eif_to_full}} - extend subset EIF to full dataset
 }
 
 The treatment renaming (lines 1205-1219) operates on data.frames and is separate

@@ -28,7 +28,7 @@ Numeric scalar
 }
 \description{
 Single-cell accessor for \eqn{\partial (\sum_k q_k) / \partial \lambda_j}; see
-`compute_marginal_jacobian_internal()` for why the Newton loop does not use it.
-This entry equals `compute_moment_scatter_internal(...)[1, j]`.
+\code{compute_marginal_jacobian_internal()} for why the Newton loop does not use it.
+This entry equals \code{compute_moment_scatter_internal(...)[1, j]}.
 }
 \keyword{internal}

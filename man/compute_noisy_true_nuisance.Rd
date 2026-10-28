@@ -28,21 +28,25 @@ compute_noisy_true_nuisance(
 \item{data_obj}{List, data object with true_params (alternative to above) - optional}
 
 \item{noise_level}{Character or numeric, noise level specification
-- Character: "n^{-1/4}", "n^{-1/2}", etc. (parsed to extract exponent)
-- Numeric: direct noise scale (e.g., 0.1)}
+\itemize{
+\item Character: \code{"n^{-1/4}"}, \code{"n^{-1/2}"}, etc. (parsed to extract exponent)
+\item Numeric: direct noise scale (e.g., 0.1)
+}}
 }
 \value{
 List containing:
-  - propensity_scores: matrix of noisy propensity scores (n × 2^m)
-  - outcome_means: matrix of noisy outcome means (n × 2^m)
-  - true_propensity_scores: original true propensity scores (for reference)
-  - true_outcome_means: original true outcome means (for reference)
-  - noise_scale: computed noise scale value
-  - method: "noisy_true" (to distinguish from estimated)
+\itemize{
+\item propensity_scores: matrix of noisy propensity scores (n × 2^m)
+\item outcome_means: matrix of noisy outcome means (n × 2^m)
+\item true_propensity_scores: original true propensity scores (for reference)
+\item true_outcome_means: original true outcome means (for reference)
+\item noise_scale: computed noise scale value
+\item method: "noisy_true" (to distinguish from estimated)
+}
 }
 \description{
 This function is for testing/validation purposes only. It takes true
-nuisance functions and adds noise at a specified rate (e.g., n^{-1/4})
+nuisance functions and adds noise at a specified rate (e.g., \code{n^{-1/4}})
 to simulate estimation error.
 }
 \details{

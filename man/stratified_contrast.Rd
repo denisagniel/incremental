@@ -23,8 +23,8 @@ two stratified fits on the same sample (\eqn{\psi_b - \psi_a} is returned).}
 }
 \value{
 List: \code{estimate} (b minus a), \code{se}, \code{ci_lower},
-  \code{ci_upper}, \code{z}, \code{p_value}, and the two level estimates
-  \code{estimate_a}, \code{estimate_b}.
+\code{ci_upper}, \code{z}, \code{p_value}, and the two level estimates
+\code{estimate_a}, \code{estimate_b}.
 }
 \description{
 Difference \eqn{\hat\psi_b - \hat\psi_a} between two stratified fits that

@@ -21,8 +21,8 @@ get_initial_lambda_internal(
 
 \item{divergence}{Character, divergence type}
 
-\item{b_ext_active}{Optional pre-built extended design `cbind(1, vectors_active)`.
-Supplied by `newton_qdelta()`; `NULL` builds it locally.}
+\item{b_ext_active}{Optional pre-built extended design \code{cbind(1, vectors_active)}.
+Supplied by \code{newton_qdelta()}; \code{NULL} builds it locally.}
 }
 \value{
 Numeric vector of length m+1, initial lambda

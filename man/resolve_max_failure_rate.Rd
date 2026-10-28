@@ -7,7 +7,7 @@
 resolve_max_failure_rate(max_qdelta_failure_rate = 0)
 }
 \arguments{
-\item{max_qdelta_failure_rate}{Numeric scalar in `[0, 1]`.}
+\item{max_qdelta_failure_rate}{Numeric scalar in \verb{[0, 1]}.}
 }
 \value{
 The validated scalar.

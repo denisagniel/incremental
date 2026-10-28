@@ -30,22 +30,24 @@ estimate_qdelta_adaptive(
 }
 \arguments{
 \item{data}{Data frame or tibble with columns:
-- Treatment columns named A1, A2, ..., Am (binary 0/1)
-- Covariate columns named X1, X2, ..., Xp (numeric)
-- Outcome column Y (numeric)}
+\itemize{
+\item Treatment columns named A1, A2, ..., Am (binary 0/1)
+\item Covariate columns named X1, X2, ..., Xp (numeric)
+\item Outcome column Y (numeric)
+}}
 
 \item{delta}{Numeric vector (length m) of target delta values. These are adapted
 per observation based on propensity patterns.}
 
 \item{treatment_cols}{Character vector of treatment column names (required).
-Length defines m; order must match `delta` and the intended bit order.}
+Length defines m; order must match \code{delta} and the intended bit order.}
 
 \item{covariate_cols}{Character vector of covariate column names (required).}
 
 \item{outcome_col}{Character scalar, outcome column name. Default "Y".}
 
 \item{epsilon}{Numeric, fixed threshold for active set computation. Treatments
-with marginal propensities in [ε, 1-ε] are active. Typical values: 0.05-0.15.}
+with marginal propensities in \verb{[ε, 1-ε]} are active. Typical values: 0.05-0.15.}
 
 \item{divergence}{Character, divergence measure for Q_delta optimization.
 Options: "kl" (Kullback-Leibler, recommended), "reverse_kl", "chi2",
@@ -76,7 +78,7 @@ Default: FALSE.}
 cross_fit = TRUE. Default: 5.}
 
 \item{confidence_level}{Numeric in (0, 1), confidence level for intervals.
-Default: 0.95 (95% confidence intervals).}
+Default: 0.95 (95\% confidence intervals).}
 
 \item{bootstrap}{Logical, use bootstrap for inference instead of asymptotic
 variance. More robust but slower. Default: FALSE.}
@@ -86,9 +88,9 @@ bootstrap = TRUE. Default: 1000.}
 
 \item{scaling_method}{Character, how to scale delta for inactive treatments:
 \itemize{
-  \item "proportional" (default): Scale proportionally to distance from boundary
-  \item "fixed": Use fixed fraction of target delta
-  \item "zero": Set to near-zero (exclude from constraint)
+\item "proportional" (default): Scale proportionally to distance from boundary
+\item "fixed": Use fixed fraction of target delta
+\item "zero": Set to near-zero (exclude from constraint)
 }}
 
 \item{inactive_fraction}{Numeric, fraction of target delta for inactive treatments
@@ -97,66 +99,76 @@ when scaling_method = "fixed". Default: 0.5.}
 \item{min_active}{Integer, minimum number of active treatments required per
 observation. Default: 1.}
 
-\item{max_qdelta_failure_rate}{Numeric in `[0, 1]`: the largest share of observations whose
+\item{max_qdelta_failure_rate}{Numeric in \verb{[0, 1]}: the largest share of observations whose
 Q_delta solve may fail and fall back to Q_delta = P0 (no shift for that observation, a bias
-toward the null). Default `0`: the first failure stops the estimate with the observation index
-and the solver's message. A positive value tolerates failures up to `rate * n` observations
-(each warned about and counted), then stops. `1` always falls back. The vanishing-threshold
+toward the null). Default \code{0}: the first failure stops the estimate with the observation index
+and the solver's message. A positive value tolerates failures up to \code{rate * n} observations
+(each warned about and counted), then stops. \code{1} always falls back. The vanishing-threshold
 estimator never falls back and always stops.}
 
-\item{qdelta_tol}{Numeric or `NULL`. Solver tolerance for the per-observation Q_delta problem;
-`NULL` (default) uses `QDELTA_TOLERANCE` for every sample size (it no longer relaxes above
+\item{qdelta_tol}{Numeric or \code{NULL}. Solver tolerance for the per-observation Q_delta problem;
+\code{NULL} (default) uses \code{QDELTA_TOLERANCE} for every sample size (it no longer relaxes above
 100,000 observations, which made the same stratum's estimate depend on whether it crossed that
 size).}
 }
 \value{
 List with same structure as \code{\link{estimate_qdelta_mean}}, plus:
 \describe{
-  \item{epsilon}{The fixed threshold value}
-  \item{delta_target}{The target delta values provided by user}
-  \item{delta_adaptive}{Matrix (n x m) of observation-specific deltas}
-  \item{scaling_method}{The delta scaling method used}
-  \item{active_sets}{Active set information}
-  \item{active_set_summary}{Summary of active sets}
-  \item{n_insufficient_active}{Number of observations with insufficient active}
+\item{epsilon}{The fixed threshold value}
+\item{delta_target}{The target delta values provided by user}
+\item{delta_adaptive}{Matrix (n x m) of observation-specific deltas}
+\item{scaling_method}{The delta scaling method used}
+\item{active_sets}{Active set information}
+\item{active_set_summary}{Summary of active sets}
+\item{n_insufficient_active}{Number of observations with insufficient active}
 }
 }
 \description{
 Implements adaptive estimator with fixed threshold ε and observation-specific
-delta_k(X). Uses active sets K_ε(X) = {k: m_k(X) ∈ [ε, 1-ε]} but adapts delta
+delta_k(X). Uses active sets \verb{K_ε(X) = \{k: m_k(X) ∈ [ε, 1-ε]\}} but adapts delta
 based on propensity patterns to satisfy localized margin conditions.
 }
 \details{
-**Adaptive delta approach:**
+\strong{Adaptive delta approach:}
 
 Unlike the vanishing threshold estimator (ε_n → 0, fixed δ), the adaptive
 estimator uses:
-- Fixed threshold ε (chosen by user)
-- Adaptive δ_k(X) that varies by observation
+\itemize{
+\item Fixed threshold ε (chosen by user)
+\item Adaptive δ_k(X) that varies by observation
+}
 
-**Delta adaptation:**
+\strong{Delta adaptation:}
 For each observation:
-- Active treatments (m_k(X) ∈ [ε, 1-ε]): Use target delta
-- Inactive treatments: Scale delta based on distance from boundary
+\itemize{
+\item Active treatments (\verb{m_k(X) ∈ [ε, 1-ε]}): Use target delta
+\item Inactive treatments: Scale delta based on distance from boundary
+}
 
-This satisfies a **localized margin condition** (weaker than global condition
+This satisfies a \strong{localized margin condition} (weaker than global condition
 required by vanishing threshold).
 
-**Scaling methods:**
-- **proportional**: δ_k(X) = δ_target * min(m_k/ε, (1-m_k)/ε, 1)
-  Smooth scaling based on propensity distance from boundary
-- **fixed**: δ_k(X) = δ_target * inactive_fraction for inactive treatments
-  Simple fixed scaling
-- **zero**: δ_k(X) ≈ 0 for inactive treatments (binary active/inactive)
+\strong{Scaling methods:}
+\itemize{
+\item \strong{proportional}: δ_k(X) = δ_target * min(m_k/ε, (1-m_k)/ε, 1)
+Smooth scaling based on propensity distance from boundary
+\item \strong{fixed}: δ_k(X) = δ_target * inactive_fraction for inactive treatments
+Simple fixed scaling
+\item \strong{zero}: δ_k(X) ≈ 0 for inactive treatments (binary active/inactive)
+}
 
-**Comparison to vanishing threshold:**
-- Vanishing: ε_n → 0, needs global margin, asymptotically efficient
-- Adaptive: Fixed ε, needs localized margin, potentially more stable with finite n
+\strong{Comparison to vanishing threshold:}
+\itemize{
+\item Vanishing: ε_n → 0, needs global margin, asymptotically efficient
+\item Adaptive: Fixed ε, needs localized margin, potentially more stable with finite n
+}
 
-**Choosing epsilon:**
-- Smaller ε → more active treatments → closer to standard estimator
-- Larger ε → fewer active treatments → more aggressive boundary handling
-- Typical range: 0.05-0.15
+\strong{Choosing epsilon:}
+\itemize{
+\item Smaller ε → more active treatments → closer to standard estimator
+\item Larger ε → fewer active treatments → more aggressive boundary handling
+\item Typical range: 0.05-0.15
+}
 }
 \examples{
 \dontrun{

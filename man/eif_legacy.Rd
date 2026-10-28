@@ -4,38 +4,40 @@
 \alias{eif_legacy}
 \title{Frozen pre-optimization EIF pass (equivalence reference ONLY)}
 \description{
-Verbatim snapshot of `calculate_eif_lambda()` and `eif_compute_chunk()` as they
+Verbatim snapshot of \code{calculate_eif_lambda()} and \code{eif_compute_chunk()} as they
 stood immediately before the 2026-08-11 stage-2 Omega-construction fix, kept in
 the tree so old-vs-new comparison never depends on a git checkout. This mirrors
-the discipline established for the solver in `R/fast_qdelta_solver_legacy.R`
+the discipline established for the solver in \code{R/fast_qdelta_solver_legacy.R}
 (spec MUST item "Numerical equivalence, old vs. new").
 
-What stage 2 changed in `R/eif.R`, and therefore what this file preserves:
-  1. **Omega construction.** Was
-     `weight_mat <- diag(weights); omega_matrix <- t(a_mat) %*% weight_mat %*% a_mat`
-     -- materializing a dense `2^m x 2^m` diagonal matrix (33.6 MB at m = 11)
-     per observation and multiplying through it (~50M flops instead of ~0.3M).
-     Now `crossprod(a_mat * weights, a_mat)`, the exact algebraic identity.
-     Profiled at 95.8% of the whole EIF pass at m = 11 before the fix.
-  2. **Observed-pattern lookup.** Was
-     `apply(a_mat, 1, function(row) all(row == a_prime_extended))` -- `2^m`
-     interpreted closure calls per observation. Now an exact integer bit-key
-     prefilter (one BLAS dgemv) plus elementwise verification of the surviving
-     candidates, so no-match and duplicate-match still reach the same `stop()`.
-  3. **Marginals.** Was `compute_marginals(propensity_scores, a_mat[, -1, drop = FALSE], ...)`
-     -- copying a `2^m x m` matrix per observation (184 KB at m = 11). Now
-     `compute_marginals(propensity_scores, a_mat, ...)[-1]`, dropping the
-     intercept from the result instead of slicing the input (verified bitwise
-     identical for m in 1..11).
+What stage 2 changed in \code{R/eif.R}, and therefore what this file preserves:
+\enumerate{
+\item \strong{Omega construction.} Was
+\verb{weight_mat <- diag(weights); omega_matrix <- t(a_mat) \%*\% weight_mat \%*\% a_mat}
+-- materializing a dense \verb{2^m x 2^m} diagonal matrix (33.6 MB at m = 11)
+per observation and multiplying through it (~50M flops instead of ~0.3M).
+Now \code{crossprod(a_mat * weights, a_mat)}, the exact algebraic identity.
+Profiled at 95.8\% of the whole EIF pass at m = 11 before the fix.
+\item \strong{Observed-pattern lookup.} Was
+\code{apply(a_mat, 1, function(row) all(row == a_prime_extended))} -- \code{2^m}
+interpreted closure calls per observation. Now an exact integer bit-key
+prefilter (one BLAS dgemv) plus elementwise verification of the surviving
+candidates, so no-match and duplicate-match still reach the same \code{stop()}.
+\item \strong{Marginals.} Was \code{compute_marginals(propensity_scores, a_mat[, -1, drop = FALSE], ...)}
+-- copying a \verb{2^m x m} matrix per observation (184 KB at m = 11). Now
+\code{compute_marginals(propensity_scores, a_mat, ...)[-1]}, dropping the
+intercept from the result instead of slicing the input (verified bitwise
+identical for m in 1..11).
 Each of (2) and (3) only became visible as a dominant cost after the preceding
 fix removed the term above it; all three are exact, not approximations.
+}
 
-Nothing else differs: the `tryCatch`/`solve()` regularization fallback, the
-active-constraint selection, the `g` vector, the zero-padding and every returned
+Nothing else differs: the \code{tryCatch}/\code{solve()} regularization fallback, the
+active-constraint selection, the \code{g} vector, the zero-padding and every returned
 value are untouched.
 
-Both functions here are suffixed `_legacy`, are called by nothing in the package
-except `tests/testthat/test-eif-omega-vectorized-equivalence.R`, and are NOT
+Both functions here are suffixed \verb{_legacy}, are called by nothing in the package
+except \code{tests/testthat/test-eif-omega-vectorized-equivalence.R}, and are NOT
 exported, NOT a fallback and NOT maintained. Do not "fix" anything in this file.
 If it needs to change, the optimization is wrong.
 }

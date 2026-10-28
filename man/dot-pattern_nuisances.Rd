@@ -50,7 +50,7 @@ pattern (i.e. after any per-pattern downgrade of \code{cross_fit}).}
 }
 \value{
 List with \code{propensity_scores} (n_k x 2^m_k) and
-  \code{outcome_means} (n_k x 2^m_k) matrices.
+\code{outcome_means} (n_k x 2^m_k) matrices.
 }
 \description{
 Cache-aware nuisance estimation for a single eligibility pattern. On a hit

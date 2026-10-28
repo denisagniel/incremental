@@ -32,10 +32,10 @@ find_max_per_treatment_delta(
 \value{
 List containing:
 \describe{
-  \item{max_deltas}{Numeric vector (length m), maximum feasible delta for each treatment}
-  \item{baseline_delta}{Numeric vector (length m), the baseline used}
-  \item{iterations}{Integer vector (length m), iterations per treatment}
-  \item{converged}{Logical vector (length m), convergence status per treatment}
+\item{max_deltas}{Numeric vector (length m), maximum feasible delta for each treatment}
+\item{baseline_delta}{Numeric vector (length m), the baseline used}
+\item{iterations}{Integer vector (length m), iterations per treatment}
+\item{converged}{Logical vector (length m), convergence status per treatment}
 }
 }
 \description{
@@ -43,7 +43,7 @@ Finds the maximum feasible delta for each treatment individually, holding
 all other treatments at a baseline value (typically 1.0).
 }
 \details{
-For each treatment k, performs binary search to find the maximum delta[k]
+For each treatment k, performs binary search to find the maximum \code{delta[k]}
 such that the resulting delta vector is feasible, with all other treatments
 set to their baseline values.
 

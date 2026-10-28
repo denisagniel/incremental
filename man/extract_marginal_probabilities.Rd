@@ -14,7 +14,7 @@ Must sum to 1 across each row.}
 \item{m}{Integer, number of treatments}
 }
 \value{
-Matrix (n x m), marginal probabilities where [i,k] = P(A_k=1|X_i)
+Matrix (n x m), marginal probabilities where \verb{[i,k] = P(A_k=1|X_i)}
 }
 \description{
 Computes marginal probabilities m_k(X) = P(A_k=1|X) from joint propensity
@@ -25,7 +25,7 @@ based on whether m_k(X) is near 0 or 1.
 For each treatment k, the marginal probability is computed by summing the
 joint probabilities over all treatment combinations where A_k = 1:
 
-m_k(X_i) = sum_{a: a_k=1} pi_a(X_i)
+\verb{m_k(X_i) = sum_\{a: a_k=1\} pi_a(X_i)}
 
 This is used in active set thresholding to identify which treatments have
 marginal propensities in (epsilon, 1-epsilon) and are therefore "active" for

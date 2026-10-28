@@ -17,13 +17,13 @@ Integer >= 1, the number of workers to use.
 Central policy for how many parallel workers the chunked EIF pass uses, so the
 rule lives in one place and is testable.
 
-Resolution order: explicit `n_cores` argument, then
-`getOption("incremental.n_cores")` (a global escape hatch for scripts that must
+Resolution order: explicit \code{n_cores} argument, then
+\code{getOption("incremental.n_cores")} (a global escape hatch for scripts that must
 force sequential execution without editing every call site), then the spec's
-default of `parallel::detectCores() - 1`.
+default of \code{parallel::detectCores() - 1}.
 
-**Forking is Unix-only.** `parallel::mclapply()` does not fork on Windows — it
-silently degrades to `lapply()`. Rather than let that happen implicitly (and
+\strong{Forking is Unix-only.} \code{parallel::mclapply()} does not fork on Windows — it
+silently degrades to \code{lapply()}. Rather than let that happen implicitly (and
 then size chunks for workers that will never exist), this function returns 1 on
 Windows, so the sequential path and the single-chunk memory budget are chosen
 deliberately. That is a platform limitation, not a defect.

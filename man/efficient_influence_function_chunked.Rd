@@ -44,7 +44,7 @@ P(A=a|X) for all 2^m treatment combinations. Rows must sum to 1.}
 values required. Represents odds ratios for marginal treatment probabilities.}
 
 \item{outcome_means}{Numeric matrix (n x 2^m) of conditional outcome means
-E[Y|A=a,X] for all treatment combinations. Required for EIF-based estimation.}
+\verb{E[Y|A=a,X]} for all treatment combinations. Required for EIF-based estimation.}
 
 \item{divergence}{Character, divergence measure for Q_delta optimization.
 Options: "kl" (default, most stable), "reverse_kl", "chi2", "hellinger".}
@@ -60,14 +60,14 @@ Default: FALSE (faster).}
 \item{chunk_size}{Integer, observations per chunk (computed automatically if NULL)}
 
 \item{n_cores}{Integer, number of parallel workers over observation chunks.
-NULL (default) resolves via `getOption("incremental.n_cores")` then
-`parallel::detectCores() - 1`. 1 forces the sequential path. Always 1 on
-Windows, where `mclapply()` cannot fork. See `resolve_eif_workers()`.}
+NULL (default) resolves via \code{getOption("incremental.n_cores")} then
+\code{parallel::detectCores() - 1}. 1 forces the sequential path. Always 1 on
+Windows, where \code{mclapply()} cannot fork. See \code{resolve_eif_workers()}.}
 
 \item{return_qdelta_results}{Logical, include the full per-observation Q_delta
 results in the output. TRUE (default) preserves the historical return
-contract. FALSE returns `qdelta_results = NULL` while keeping
-`convergence_info` and `convergence_summary` fully populated, and is what
+contract. FALSE returns \code{qdelta_results = NULL} while keeping
+\code{convergence_info} and \code{convergence_summary} fully populated, and is what
 unlocks the parallel speedup -- see "Return payload dominates fork speedup".}
 }
 \value{
@@ -78,46 +78,46 @@ Memory-efficient version of EIF computation that processes observations in chunk
 Automatically used when n > 10,000 to avoid memory issues with large matrices.
 
 Chunks are independent, so they are optionally computed in parallel across
-observation chunks (see `n_cores`). Parallelism is deliberately over the
+observation chunks (see \code{n_cores}). Parallelism is deliberately over the
 OBSERVATION axis only -- never over delta scenarios or coalitions, which are
 left free for future chaining/attribution work.
 }
 \section{Memory budget is per worker, not global}{
 
-The auto chunk-size rule (`eif_default_chunk_size()`) targets ~2 GB of working matrices
-(`EIF_LIVE_MATRICES * 2^m * 8` bytes per observation, 14 live matrices counted from
-`eif_compute_chunk()`). With `K` workers, `K` chunks are resident simultaneously, so the target
-is divided by `K`:
+The auto chunk-size rule (\code{eif_default_chunk_size()}) targets ~2 GB of working matrices
+(\code{EIF_LIVE_MATRICES * 2^m * 8} bytes per observation, 14 live matrices counted from
+\code{eif_compute_chunk()}). With \code{K} workers, \code{K} chunks are resident simultaneously, so the target
+is divided by \code{K}:
 \preformatted{
   bytes_per_obs      <- 14 * 2^m * 8
   target_chunk_bytes <- 2e9 / n_workers        # <- per-worker budget
   chunk_size         <- floor(target_chunk_bytes / bytes_per_obs)
   chunk_size         <- max(25, min(chunk_size, 50000))
 }
-so total peak stays near the budget. Dividing by `K` also guarantees roughly `K` times more
-chunks, which keeps `K` workers busy. The previous model assumed 6 matrices and a floor of
-1000 observations, which exceeded the budget at m >= 12; the per-observation `q_delta` vectors
+so total peak stays near the budget. Dividing by \code{K} also guarantees roughly \code{K} times more
+chunks, which keeps \code{K} workers busy. The previous model assumed 6 matrices and a floor of
+1000 observations, which exceeded the budget at m >= 12; the per-observation \code{q_delta} vectors
 held by the parent are not counted here.
 }
 
 \section{Return payload dominates fork speedup}{
 
-Measured, not assumed (m = 11, K = 9, `benchmark_eif_chunk_parallel.R` and
-`log_bench_chunk_parallel.txt`): with the full per-observation `qdelta_results`
-shipped back from workers the speedup is **0.73x** -- i.e. *slower* than
+Measured, not assumed (m = 11, K = 9, \code{benchmark_eif_chunk_parallel.R} and
+\code{log_bench_chunk_parallel.txt}): with the full per-observation \code{qdelta_results}
+shipped back from workers the speedup is \strong{0.73x} -- i.e. \emph{slower} than
 sequential -- while with the same work and only the scalar convergence fields
-returned it is **4.70x**. The cause is `mclapply()`'s return path: each
-observation's `q_delta` is a `2^m` double vector (16 KB at m = 11), so a chunk
+returned it is \strong{4.70x}. The cause is \code{mclapply()}'s return path: each
+observation's \code{q_delta} is a \code{2^m} double vector (16 KB at m = 11), so a chunk
 of 500 observations serializes ~8 MB through a pipe, and every worker's payload
 must be deserialized by the single parent process. That parent-side
-deserialization is serial, so it becomes the bottleneck and gets *worse* with
+deserialization is serial, so it becomes the bottleneck and gets \emph{worse} with
 larger chunks (speedup fell 3.05x -> 1.09x -> 0.66x as chunk size rose
 200 -> 500 -> 1000).
 
-Hence `return_qdelta_results`. It defaults to TRUE so the documented return
-contract is unchanged, but no code in `R/` or `application/` actually reads the
-heavy `q_delta`/`lambda` vectors off an EIF result (only the scalar `converged`
-flag, which `convergence_info` provides either way). Callers that do not need
+Hence \code{return_qdelta_results}. It defaults to TRUE so the documented return
+contract is unchanged, but no code in \verb{R/} or \verb{application/} actually reads the
+heavy \code{q_delta}/\code{lambda} vectors off an EIF result (only the scalar \code{converged}
+flag, which \code{convergence_info} provides either way). Callers that do not need
 them should pass FALSE and get the full parallel speedup.
 }
 

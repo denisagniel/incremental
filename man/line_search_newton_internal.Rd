@@ -33,14 +33,16 @@ line_search_newton_internal(
 
 \item{c1}{Armijo condition parameter (default 1e-4)}
 
-\item{b_ext_active}{Optional pre-built extended design `cbind(1, vectors_active)`}
+\item{b_ext_active}{Optional pre-built extended design \code{cbind(1, vectors_active)}}
 }
 \value{
 Accepted lambda (either candidate or old)
 }
 \description{
 Enhanced line search with:
-- More steps (20 instead of 10)
-- Armijo condition for sufficient decrease
-- Proper objective function evaluation
+\itemize{
+\item More steps (20 instead of 10)
+\item Armijo condition for sufficient decrease
+\item Proper objective function evaluation
+}
 }

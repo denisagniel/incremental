@@ -48,8 +48,8 @@ eif_compute_chunk_legacy(
 List with eif_values and plugin for the chunk
 }
 \description{
-Identical to `eif_compute_chunk()` except that it calls
-`calculate_eif_lambda_legacy()`. Exists so the chunk-level A/B (profiling and
+Identical to \code{eif_compute_chunk()} except that it calls
+\code{calculate_eif_lambda_legacy()}. Exists so the chunk-level A/B (profiling and
 benchmarking) runs both implementations in one process with no session-level
 confounds.
 }

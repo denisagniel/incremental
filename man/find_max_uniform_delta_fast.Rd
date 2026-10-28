@@ -38,9 +38,11 @@ Much faster than full dataset search with minimal accuracy loss.
 }
 \details{
 Uses random sampling to dramatically speed up binary search:
-1. Sample n_sample observations
-2. Run binary search on sample
-3. Optionally verify on full dataset with 5% safety margin
+\enumerate{
+\item Sample n_sample observations
+\item Run binary search on sample
+\item Optionally verify on full dataset with 5\% safety margin
+}
 
 For 381K observations, reduces search from hours to minutes.
 }

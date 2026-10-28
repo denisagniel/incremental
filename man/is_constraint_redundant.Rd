@@ -19,32 +19,23 @@ is_constraint_redundant(
 \item{propensity_scores}{Vector of propensity scores for active combinations}
 
 \item{epsilon}{Threshold for considering marginal as deterministic (default 1e-6)}
-
-\item{mat}{Square matrix to check}
-
-\item{cond_threshold}{Condition number threshold (default 1e10)}
-
-\item{det_threshold}{Determinant threshold (default 1e-12)}
 }
 \value{
-List with is_singular (logical), condition_number, determinant, rank
-Check if a marginal constraint is truly redundant
-
-A constraint k is redundant if P(A_k = 1) is deterministic (0 or 1).
-In this case, λ_k is not identified and can be dropped without changing Q_δ.
-
 TRUE if constraint is redundant, FALSE if active
 }
 \description{
 Utilities for detecting and handling singular Jacobian matrices in Q_delta
 optimization. When the constraint Jacobian Ω becomes singular, this module:
-1. Drops truly redundant constraints (P(A_k=1) ∈ {0,1})
-2. Uses regularization for active constraints causing near-boundary singularity
+\enumerate{
+\item Drops truly redundant constraints (\verb{P(A_k=1) ∈ \{0,1\}})
+\item Uses regularization for active constraints causing near-boundary singularity
 This preserves the estimand while allowing estimation at/near the boundary.
+}
 }
 \author{
 Denis Agniel
-Check if a matrix is numerically singular
+Check if a marginal constraint is truly redundant
 
-Uses condition number and determinant to detect singularity
+A constraint k is redundant if P(A_k = 1) is deterministic (0 or 1).
+In this case, λ_k is not identified and can be dropped without changing Q_δ.
 }

@@ -21,29 +21,33 @@ estimate_propensity_scores(
 }
 \arguments{
 \item{data}{Data frame with columns:
-- Treatment columns: A1, A2, ..., Am (binary 0/1)
-- Covariate columns: X1, X2, ..., Xp (numeric)}
+\itemize{
+\item Treatment columns: A1, A2, ..., Am (binary 0/1)
+\item Covariate columns: X1, X2, ..., Xp (numeric)
+}}
 
 \item{treatment_cols}{Character vector of treatment column names (required).}
 
 \item{covariate_cols}{Character vector of covariate column names (required).}
 
 \item{method}{Character, estimation method. Chooses classification approach:
-- **"glm"** (default): Multinomial logistic via nnet::multinom(). Fast, interpretable,
-  works well for m <= 3. May struggle with m >= 4 (2^m classes).
-- **"nnet"**: Alias for "glm"
-- **"randomforest"**: Multinomial RF via randomForest::randomForest(). Flexible,
-  handles m <= 5 reasonably. Slower than GLM.
-- **"xgboost"**: Multinomial gradient boosting. Fast, flexible, good for m <= 6.
-- **"sequential"**: Fits m conditional models via chain rule factorization.
-  **RECOMMENDED** - theoretically principled, no ad-hoc normalization, provable
-  convergence to P(A|X). Models P(A) = ∏P(Aₖ|A₁,...,Aₖ₋₁,X). Fast (only m models),
-  handles arbitrary treatment correlations, no sparsity issues. See Details.
-- **"binary_per_combination"**: Fits 2^m binary models P(A=a|X) separately.
-  Respects treatment correlations fully but requires ad-hoc normalization.
-  Use with binary_method = "xgboost" for best performance.
-- **"mlr3"**: mlr3 framework with flexible learners (requires mlr3 package)
-- **"superlearner"**: Ensemble via SuperLearner (requires SuperLearner package)}
+\itemize{
+\item \strong{"glm"} (default): Multinomial logistic via nnet::multinom(). Fast, interpretable,
+works well for m <= 3. May struggle with m >= 4 (2^m classes).
+\item \strong{"nnet"}: Alias for "glm"
+\item \strong{"randomforest"}: Multinomial RF via randomForest::randomForest(). Flexible,
+handles m <= 5 reasonably. Slower than GLM.
+\item \strong{"xgboost"}: Multinomial gradient boosting. Fast, flexible, good for m <= 6.
+\item \strong{"sequential"}: Fits m conditional models via chain rule factorization.
+\strong{RECOMMENDED} - theoretically principled, no ad-hoc normalization, provable
+convergence to P(A|X). Models P(A) = ∏P(Aₖ|A₁,...,Aₖ₋₁,X). Fast (only m models),
+handles arbitrary treatment correlations, no sparsity issues. See Details.
+\item \strong{"binary_per_combination"}: Fits 2^m binary models P(A=a|X) separately.
+Respects treatment correlations fully but requires ad-hoc normalization.
+Use with binary_method = "xgboost" for best performance.
+\item \strong{"mlr3"}: mlr3 framework with flexible learners (requires mlr3 package)
+\item \strong{"superlearner"}: Ensemble via SuperLearner (requires SuperLearner package)
+}}
 
 \item{cross_fit}{Logical, use sample splitting via cross-fitting. Reduces
 overfitting bias when using flexible methods (randomforest, xgboost).
@@ -74,12 +78,12 @@ method = "sequential".}
 \value{
 List containing:
 \describe{
-  \item{propensity_scores}{Numeric matrix (n x 2^m), P(A=a|X) for each combo. Rows sum to 1.}
-  \item{models}{Fitted model object(s). Single model for multinomial methods,
-    list of 2^m models for binary_per_combination.}
-  \item{method}{Character, method used (for reference)}
-  \item{treatment_combinations}{Matrix (2^m x m), binary treatment patterns in order}
-  \item{cross_fit}{Logical, whether cross-fitting was used}
+\item{propensity_scores}{Numeric matrix (n x 2^m), P(A=a|X) for each combo. Rows sum to 1.}
+\item{models}{Fitted model object(s). Single model for multinomial methods,
+list of 2^m models for binary_per_combination.}
+\item{method}{Character, method used (for reference)}
+\item{treatment_combinations}{Matrix (2^m x m), binary treatment patterns in order}
+\item{cross_fit}{Logical, whether cross-fitting was used}
 }
 }
 \description{
@@ -88,25 +92,29 @@ using various methods. Propensity scores are required for EIF-based (one-step)
 estimation and must be properly calibrated for valid inference.
 }
 \details{
-**Method selection guide:**
-- **m = 2-3**: Use "sequential" or "glm" (both fast and reliable)
-- **m = 4-6**: Use "sequential" (recommended) or "binary_per_combination"
-- **m >= 7**: Use "sequential" (theoretically sound, computationally feasible)
+\strong{Method selection guide:}
+\itemize{
+\item \strong{m = 2-3}: Use "sequential" or "glm" (both fast and reliable)
+\item \strong{m = 4-6}: Use "sequential" (recommended) or "binary_per_combination"
+\item \strong{m >= 7}: Use "sequential" (theoretically sound, computationally feasible)
+}
 
-**Sequential method (RECOMMENDED):**
+\strong{Sequential method (RECOMMENDED):}
 Models joint PS via chain rule factorization:
 \deqn{P(A_1,...,A_m|X) = P(A_1|X) P(A_2|A_1,X) ... P(A_m|A_1,...,A_{m-1},X)}
 
 Key advantages over binary_per_combination:
-- **Theoretically principled**: Direct probability factorization, no ad-hoc normalization
-- **Provable convergence**: Each conditional converges, so the joint converges
-- **Computationally efficient**: Only m models (vs 2^m), each fit on n observations
-- **No sparsity issues**: All models well-supported (no need for sparse fitting)
-- **Flexible to interactions**: Captures treatment correlations via conditioning
+\itemize{
+\item \strong{Theoretically principled}: Direct probability factorization, no ad-hoc normalization
+\item \strong{Provable convergence}: Each conditional converges, so the joint converges
+\item \strong{Computationally efficient}: Only m models (vs 2^m), each fit on n observations
+\item \strong{No sparsity issues}: All models well-supported (no need for sparse fitting)
+\item \strong{Flexible to interactions}: Captures treatment correlations via conditioning
+}
 
 Probabilities sum to 1 by construction (chain rule + law of total probability).
 
-**Quality checks:** The function validates outputs (non-finite values, rows
+\strong{Quality checks:} The function validates outputs (non-finite values, rows
 sum to 1 within tolerance, severe positivity violations).
 
 Random number generation: the caller is responsible for setting the seed

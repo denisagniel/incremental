@@ -23,9 +23,11 @@ compute_adaptive_deltas(
 \item{epsilon}{Numeric, the fixed threshold for active set}
 
 \item{scaling_method}{Character, how to scale delta for inactive treatments:
-- "zero": Set to 1.0 (no shift, **paper's canonical definition**)
-- "proportional": Scale proportionally to distance from boundary (smooth extension)
-- "fixed": Use fixed fraction of target delta (extension)}
+\itemize{
+\item "zero": Set to 1.0 (no shift, \strong{paper's canonical definition})
+\item "proportional": Scale proportionally to distance from boundary (smooth extension)
+\item "fixed": Use fixed fraction of target delta (extension)
+}}
 
 \item{inactive_fraction}{Numeric, fraction of target delta for inactive treatments
 (used with scaling_method = "fixed")}

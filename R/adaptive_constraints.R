@@ -3,19 +3,11 @@
 #' @description
 #' Utilities for detecting and handling singular Jacobian matrices in Q_delta
 #' optimization. When the constraint Jacobian Ω becomes singular, this module:
-#' 1. Drops truly redundant constraints (P(A_k=1) ∈ {0,1})
+#' 1. Drops truly redundant constraints (`P(A_k=1) ∈ {0,1}`)
 #' 2. Uses regularization for active constraints causing near-boundary singularity
 #' This preserves the estimand while allowing estimation at/near the boundary.
 #' @author Denis Agniel
 
-#' Check if a matrix is numerically singular
-#'
-#' Uses condition number and determinant to detect singularity
-#'
-#' @param mat Square matrix to check
-#' @param cond_threshold Condition number threshold (default 1e10)
-#' @param det_threshold Determinant threshold (default 1e-12)
-#' @return List with is_singular (logical), condition_number, determinant, rank
 #' Check if a marginal constraint is truly redundant
 #'
 #' A constraint k is redundant if P(A_k = 1) is deterministic (0 or 1).
@@ -177,7 +169,7 @@ identify_redundant_constraint <- function(jacobian, constraint_vector,
 #' Solve linear system with hybrid adaptive approach
 #'
 #' If the Jacobian is singular:
-#' 1. First, drop truly redundant constraints (P(A_k=1) ∈ {0,1})
+#' 1. First, drop truly redundant constraints (`P(A_k=1) ∈ {0,1}`)
 #' 2. If still singular, use regularization (Ω + ρI) instead of dropping active constraints
 #'
 #' This preserves the estimand while handling both redundant constraints and
@@ -193,7 +185,7 @@ identify_redundant_constraint <- function(jacobian, constraint_vector,
 #' @param regularization_rho Regularization parameter for active constraints (default 1e-6)
 #' @param verbose Print diagnostic messages (default FALSE)
 #' @return List with:
-#'   - lambda_update: Newton step Δλ = -J^{-1} F(λ)
+#'   - lambda_update: Newton step `Δλ = -J^{-1} F(λ)`
 #'   - constraints_dropped: Indices of dropped constraints
 #'   - n_drops: Number of constraints dropped
 #'   - used_regularization: Whether regularization was applied

@@ -18,11 +18,13 @@ combinations have positive probability under P_0}
 }
 \value{
 List containing:
-  - feasible: logical, whether delta is feasible
-  - target_marginals: computed target marginal probabilities
-  - polytope_vertices: vertices of the marginal polytope
-  - distance_to_boundary: distance to polytope boundary
-  - reason: character, reason for infeasibility if applicable
+\itemize{
+\item feasible: logical, whether delta is feasible
+\item target_marginals: computed target marginal probabilities
+\item polytope_vertices: vertices of the marginal polytope
+\item distance_to_boundary: distance to polytope boundary
+\item reason: character, reason for infeasibility if applicable
+}
 }
 \description{
 Enhanced version that uses marginal polytope computation to rigorously

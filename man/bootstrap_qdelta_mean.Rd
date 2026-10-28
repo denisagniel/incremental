@@ -31,12 +31,14 @@ bootstrap_qdelta_mean(
 }
 \value{
 List containing:
-  - bootstrap_estimates: vector of bootstrap estimates
-  - estimate: original point estimate
-  - se: bootstrap standard error
-  - ci_lower: lower confidence bound
-  - ci_upper: upper confidence bound
-  - confidence_level: confidence level used
+\itemize{
+\item bootstrap_estimates: vector of bootstrap estimates
+\item estimate: original point estimate
+\item se: bootstrap standard error
+\item ci_lower: lower confidence bound
+\item ci_upper: upper confidence bound
+\item confidence_level: confidence level used
+}
 }
 \description{
 Performs bootstrap inference by resampling the data and re-estimating
@@ -53,6 +55,8 @@ sim_data <- simulate_vector_treatment_data(n = 200, m = 2, p = 2, seed = 123)
 # Bootstrap inference (caller controls RNG)
 set.seed(456)
 boot_result <- bootstrap_qdelta_mean(sim_data$data, delta = c(1.5, 2.0),
+                                  treatment_cols = c("A1", "A2"),
+                                  covariate_cols = c("X1", "X2"),
                                   n_bootstrap = 100)
 print(boot_result$se)
 print(boot_result$ci_lower)

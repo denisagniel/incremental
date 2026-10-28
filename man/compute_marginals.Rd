@@ -9,9 +9,9 @@ compute_marginals(joint_dist, vectors = NULL, m = NULL)
 \arguments{
 \item{joint_dist}{Numeric vector of length 2^m, joint probabilities}
 
-\item{vectors}{Matrix of binary vectors (from generate_binary_vectors). Optional if `m` is provided.}
+\item{vectors}{Matrix of binary vectors (from generate_binary_vectors). Optional if \code{m} is provided.}
 
-\item{m}{Integer, number of treatments. Required if `vectors` is NULL.}
+\item{m}{Integer, number of treatments. Required if \code{vectors} is NULL.}
 }
 \value{
 Numeric vector of length m, marginal probabilities

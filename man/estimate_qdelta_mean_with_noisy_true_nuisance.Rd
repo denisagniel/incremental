@@ -46,16 +46,18 @@ estimate_qdelta_mean_with_noisy_true_nuisance(
 }
 \value{
 List containing:
-  - estimate: point estimate of psi_delta
-  - se: standard error
-  - ci_lower: lower confidence bound
-  - ci_upper: upper confidence bound
-  - p_value: p-value for testing H0: psi_delta = 0
-  - eif_values: efficient influence function values
-  - eif_result: full EIF result object
-  - nuisance_estimates: list with noisy nuisance functions
-  - noise_scale: noise scale used
-  - estimator: estimator type used
+\itemize{
+\item estimate: point estimate of psi_delta
+\item se: standard error
+\item ci_lower: lower confidence bound
+\item ci_upper: upper confidence bound
+\item p_value: p-value for testing H0: psi_delta = 0
+\item eif_values: efficient influence function values
+\item eif_result: full EIF result object
+\item nuisance_estimates: list with noisy nuisance functions
+\item noise_scale: noise scale used
+\item estimator: estimator type used
+}
 }
 \description{
 Wrapper function that computes noisy true nuisance functions and performs

@@ -37,9 +37,11 @@ estimate_qdelta_mean(
 }
 \arguments{
 \item{data}{Data frame or tibble with columns:
-- Treatment columns named A1, A2, ..., Am (binary 0/1)
-- Covariate columns named X1, X2, ..., Xp (numeric)
-- Outcome column Y (numeric)}
+\itemize{
+\item Treatment columns named A1, A2, ..., Am (binary 0/1)
+\item Covariate columns named X1, X2, ..., Xp (numeric)
+\item Outcome column Y (numeric)
+}}
 
 \item{delta}{Numeric vector of length m specifying target marginal treatment
 probabilities as odds ratios. Each element must be positive. Values > 1
@@ -47,7 +49,7 @@ increase treatment probability; values < 1 decrease it. E.g., delta = c(1.5, 2.0
 increases P(A1=1) by factor 1.5 and P(A2=1) by factor 2.0.}
 
 \item{treatment_cols}{Character vector of treatment column names (required).
-Length defines m; order must match `delta` and the intended bit order.}
+Length defines m; order must match \code{delta} and the intended bit order.}
 
 \item{covariate_cols}{Character vector of covariate column names (required).}
 
@@ -69,11 +71,11 @@ Options: "glm", "randomforest", "xgboost". Only used if ps_method = "binary_per_
 Options: "glm", "gam", "randomforest", "superlearner". Default: "glm".}
 
 \item{oracle_propensities}{Optional numeric matrix (n x 2^m) of known
-propensity scores. If supplied together with `oracle_outcomes`, model
+propensity scores. If supplied together with \code{oracle_outcomes}, model
 fitting is bypassed and these are used directly. Default: NULL.}
 
 \item{oracle_outcomes}{Optional numeric matrix (n x 2^m) of known outcome
-means E[Y|A=a,X]. Must be supplied together with `oracle_propensities`.
+means \verb{E[Y|A=a,X]}. Must be supplied together with \code{oracle_propensities}.
 Default: NULL.}
 
 \item{estimator}{Character, final estimator type.
@@ -90,7 +92,7 @@ Default: FALSE.}
 cross_fit = TRUE. Default: 5.}
 
 \item{confidence_level}{Numeric in (0, 1), confidence level for intervals.
-Default: 0.95 (95% confidence intervals).}
+Default: 0.95 (95\% confidence intervals).}
 
 \item{bootstrap}{Logical, use bootstrap for inference instead of asymptotic
 variance. More robust but slower. Default: FALSE.}
@@ -101,13 +103,13 @@ bootstrap = TRUE. Default: 1000.}
 \item{threshold_type}{Character, active set selection method for handling
 boundary propensities. Options:
 \itemize{
-  \item "none" (default): Standard estimator, all treatments always active
-  \item "vanishing": Vanishing threshold ε_n → 0 with fixed delta (asymptotically optimal)
-  \item "adaptive": Fixed threshold ε with adaptive delta_k(X) (localized margin)
+\item "none" (default): Standard estimator, all treatments always active
+\item "vanishing": Vanishing threshold ε_n → 0 with fixed delta (asymptotically optimal)
+\item "adaptive": Fixed threshold ε with adaptive delta_k(X) (localized margin)
 }}
 
 \item{gamma}{Numeric, threshold rate parameter for vanishing threshold.
-ε_n = C*n^{-γ}. Only used if threshold_type = "vanishing".
+\code{ε_n = C*n^{-γ}}. Only used if threshold_type = "vanishing".
 Default: NULL (auto-selects 0.3).}
 
 \item{epsilon}{Numeric, fixed threshold for adaptive estimator.
@@ -116,9 +118,9 @@ Only used if threshold_type = "adaptive". Default: 0.1.}
 \item{scaling_method}{Character, delta scaling method for adaptive estimator.
 Options:
 \itemize{
-  \item "proportional" (smooth scaling)
-  \item "fixed" (fixed fraction)
-  \item "zero" (binary)
+\item "proportional" (smooth scaling)
+\item "fixed" (fixed fraction)
+\item "zero" (binary)
 }
 Only used if threshold_type = "adaptive". Default: "proportional".}
 
@@ -131,52 +133,52 @@ observation. Only used if threshold_type != "none". Default: 1.}
 
 \item{contrast}{Character, estimand specification. Options:
 \itemize{
-  \item "absolute" (default): Estimate E[Y^{Q_delta}], the counterfactual mean
-  \item "difference": Estimate E[Y^{Q_delta}] - E[Y], the difference from observed mean
+\item "absolute" (default): Estimate \code{E[Y^{Q_delta}]}, the counterfactual mean
+\item "difference": Estimate \code{E[Y^{Q_delta}] - E[Y]}, the difference from observed mean
 }
 The "difference" option provides correct inference for the causal contrast via
 modified EIF. Default: "absolute".}
 
-\item{prob_infeasible}{Numeric in [0, 1], maximum proportion of infeasible observations
+\item{prob_infeasible}{Numeric in \verb{[0, 1]}, maximum proportion of infeasible observations
 allowed before erroring. If the proportion of observations with infeasible delta
 is less than this threshold, estimation continues using only feasible observations
 with a warning. Default: 0 (strict mode: error if even one observation is infeasible).
-Example: prob_infeasible = 0.05 allows up to 5% infeasible observations.}
+Example: prob_infeasible = 0.05 allows up to 5\% infeasible observations.}
 
-\item{max_qdelta_failure_rate}{Numeric in `[0, 1]`: the largest share of observations whose
+\item{max_qdelta_failure_rate}{Numeric in \verb{[0, 1]}: the largest share of observations whose
 Q_delta solve may fail and fall back to Q_delta = P0 (no shift for that observation, a bias
-toward the null). Default `0`: the first failure stops the estimate with the observation index
-and the solver's message. A positive value tolerates failures up to `rate * n` observations
-(each warned about and counted), then stops. `1` always falls back. The vanishing-threshold
+toward the null). Default \code{0}: the first failure stops the estimate with the observation index
+and the solver's message. A positive value tolerates failures up to \code{rate * n} observations
+(each warned about and counted), then stops. \code{1} always falls back. The vanishing-threshold
 estimator never falls back and always stops.}
 
-\item{qdelta_tol}{Numeric or `NULL`. Solver tolerance for the per-observation Q_delta problem;
-`NULL` (default) uses `QDELTA_TOLERANCE` for every sample size (it no longer relaxes above
+\item{qdelta_tol}{Numeric or \code{NULL}. Solver tolerance for the per-observation Q_delta problem;
+\code{NULL} (default) uses \code{QDELTA_TOLERANCE} for every sample size (it no longer relaxes above
 100,000 observations, which made the same stratum's estimate depend on whether it crossed that
 size).}
 }
 \value{
 List containing:
 \describe{
-  \item{estimate}{Numeric, point estimate of E[Y^{Q_delta}] or E[Y^{Q_delta}] - E[Y]}
-  \item{se}{Numeric, standard error from EIF or bootstrap}
-  \item{ci_lower}{Numeric, lower (1-alpha)/2 confidence bound}
-  \item{ci_upper}{Numeric, upper (1-alpha)/2 confidence bound}
-  \item{p_value}{Numeric, two-sided p-value for H0: psi_delta = 0}
-  \item{eif_values}{Numeric vector (length n), centered EIF values}
-  \item{qdelta_results}{List (length n), per-observation Q_delta solver results}
-  \item{convergence_info}{List with converged (logical vector), iterations (integer vector)}
-  \item{convergence_summary}{List with n_converged, convergence_rate, mean_iterations}
-  \item{nuisance_estimates}{List with propensity_scores (n x 2^m matrix), outcome_means (n x 2^m matrix), models}
-  \item{contrast}{Character, estimand type ("absolute" or "difference")}
-  \item{n_original}{Integer, original sample size before filtering infeasible observations}
-  \item{n_infeasible_excluded}{Integer, number of observations excluded due to infeasibility}
-  \item{prop_infeasible_excluded}{Numeric, proportion of observations excluded (0 if none)}
-  \item{prob_infeasible_threshold}{Numeric, threshold used for infeasibility filtering}
+\item{estimate}{Numeric, point estimate of \code{E[Y^{Q_delta}]} or \code{E[Y^{Q_delta}] - E[Y]}}
+\item{se}{Numeric, standard error from EIF or bootstrap}
+\item{ci_lower}{Numeric, lower (1-alpha)/2 confidence bound}
+\item{ci_upper}{Numeric, upper (1-alpha)/2 confidence bound}
+\item{p_value}{Numeric, two-sided p-value for H0: psi_delta = 0}
+\item{eif_values}{Numeric vector (length n), centered EIF values}
+\item{qdelta_results}{List (length n), per-observation Q_delta solver results}
+\item{convergence_info}{List with converged (logical vector), iterations (integer vector)}
+\item{convergence_summary}{List with n_converged, convergence_rate, mean_iterations}
+\item{nuisance_estimates}{List with propensity_scores (n x 2^m matrix), outcome_means (n x 2^m matrix), models}
+\item{contrast}{Character, estimand type ("absolute" or "difference")}
+\item{n_original}{Integer, original sample size before filtering infeasible observations}
+\item{n_infeasible_excluded}{Integer, number of observations excluded due to infeasibility}
+\item{prop_infeasible_excluded}{Numeric, proportion of observations excluded (0 if none)}
+\item{prob_infeasible_threshold}{Numeric, threshold used for infeasibility filtering}
 }
 }
 \description{
-This is the primary user-facing function that estimates E[Y^{Q_delta}], the
+This is the primary user-facing function that estimates \code{E[Y^{Q_delta}]}, the
 counterfactual mean under the incremental intervention distribution Q_delta.
 Implements cross-fitted one-step estimation based on the efficient influence
 function (EIF), the estimator analyzed in the accompanying paper. Also
@@ -184,42 +186,47 @@ supports an experimental TMLE-style estimator with no supporting theory.
 }
 \details{
 The function implements the estimation procedure described in the paper:
-1. Estimates nuisance functions: propensity scores P(A|X) and outcome models E[Y|A,X]
-2. For each observation, solves for Q_delta distribution using constrained optimization
-3. Computes the one-step estimate from the EIF (or the experimental TMLE-style estimator)
-4. Provides valid inference via influence function variance or bootstrap
+\enumerate{
+\item Estimates nuisance functions: propensity scores P(A|X) and outcome models \code{E[Y|A,X]}
+\item For each observation, solves for Q_delta distribution using constrained optimization
+\item Computes the one-step estimate from the EIF (or the experimental TMLE-style estimator)
+\item Provides valid inference via influence function variance or bootstrap
+}
 
-**Threshold types (handling boundary propensities):**
+\strong{Threshold types (handling boundary propensities):}
+\itemize{
+\item \strong{"none"} (default): Standard estimator assuming all treatments active everywhere.
+Use when propensities are well away from 0 and 1.
+\item \strong{"vanishing"}: Vanishing threshold ε_n → 0 with active sets \verb{K_\{ε_n\}(X)}.
+Asymptotically optimal under global margin condition. Automatically selects
+rates (gamma, alpha) or accepts user values. Use for large samples with
+theory-driven analysis.
+\item \strong{"adaptive"}: Fixed threshold ε with observation-specific delta_k(X).
+Uses localized margin condition. Simpler than vanishing threshold with
+potentially better finite sample stability. User controls epsilon (e.g., 0.1)
+and scaling_method. Use for finite samples or when wanting direct control.
+}
 
-- **"none"** (default): Standard estimator assuming all treatments active everywhere.
-  Use when propensities are well away from 0 and 1.
+\strong{When to use threshold types:}
+\itemize{
+\item Well-behaved propensities: threshold_type = "none"
+\item Some boundary propensities, large n: threshold_type = "vanishing"
+\item Some boundary propensities, finite n: threshold_type = "adaptive"
+\item Very extreme propensities: Consider data quality or eligibility stratification
+}
 
-- **"vanishing"**: Vanishing threshold ε_n → 0 with active sets K_{ε_n}(X).
-  Asymptotically optimal under global margin condition. Automatically selects
-  rates (gamma, alpha) or accepts user values. Use for large samples with
-  theory-driven analysis.
+\strong{Recommended settings:}
+\itemize{
+\item For most applications: estimator = "one_step", divergence = "kl", threshold_type = "none"
+\item For boundary propensities: threshold_type = "adaptive", epsilon = 0.1
+\item For high-dimensional treatments (m >= 5): ps_method = "binary_per_combination"
+\item For flexible estimation: use randomForest/xgboost methods with cross_fit = TRUE
+}
 
-- **"adaptive"**: Fixed threshold ε with observation-specific delta_k(X).
-  Uses localized margin condition. Simpler than vanishing threshold with
-  potentially better finite sample stability. User controls epsilon (e.g., 0.1)
-  and scaling_method. Use for finite samples or when wanting direct control.
-
-**When to use threshold types:**
-- Well-behaved propensities: threshold_type = "none"
-- Some boundary propensities, large n: threshold_type = "vanishing"
-- Some boundary propensities, finite n: threshold_type = "adaptive"
-- Very extreme propensities: Consider data quality or eligibility stratification
-
-**Recommended settings:**
-- For most applications: estimator = "one_step", divergence = "kl", threshold_type = "none"
-- For boundary propensities: threshold_type = "adaptive", epsilon = 0.1
-- For high-dimensional treatments (m >= 5): ps_method = "binary_per_combination"
-- For flexible estimation: use randomForest/xgboost methods with cross_fit = TRUE
-
-**Random number generation:** The caller controls RNG state. Set seed before
+\strong{Random number generation:} The caller controls RNG state. Set seed before
 calling if using cross-fitting or bootstrap: set.seed(123).
 
-**Feasibility checking:** The function automatically checks if delta is feasible
+\strong{Feasibility checking:} The function automatically checks if delta is feasible
 for all observations (when threshold_type = "none"). If infeasible, suggests
 alternatives via suggest_feasible_delta(). When using threshold types, active
 set selection handles boundary issues automatically.

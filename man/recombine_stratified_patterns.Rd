@@ -33,9 +33,9 @@ patterns in the included set are used; renormalized to sum to 1.}
 }
 \value{
 A list with \code{estimate}, \code{se}, \code{ci_lower},
-  \code{ci_upper}, \code{p_value}, \code{n_patterns_used}, \code{coverage}
-  (fraction of the full stratified sample represented), \code{eif_values}, and
-  \code{patterns} (the included per-pattern summary with applied weights).
+\code{ci_upper}, \code{p_value}, \code{n_patterns_used}, \code{coverage}
+(fraction of the full stratified sample represented), \code{eif_values}, and
+\code{patterns} (the included per-pattern summary with applied weights).
 }
 \description{
 Re-aggregates a stratified estimate from the per-pattern contributions saved

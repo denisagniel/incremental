@@ -105,6 +105,8 @@ inference_qdelta_mean <- function(estimate, eif_values, confidence_level = 0.95,
 #' # Bootstrap inference (caller controls RNG)
 #' set.seed(456)
 #' boot_result <- bootstrap_qdelta_mean(sim_data$data, delta = c(1.5, 2.0),
+#'                                   treatment_cols = c("A1", "A2"),
+#'                                   covariate_cols = c("X1", "X2"),
 #'                                   n_bootstrap = 100)
 #' print(boot_result$se)
 #' print(boot_result$ci_lower)
@@ -243,7 +245,9 @@ hypothesis_test_qdelta_mean <- function(estimate, se, null_value = 0,
 #'   c(1.2, 1.5), c(1.5, 2.0), c(2.0, 1.2)
 #' )
 #' 
-#' sens_result <- sensitivity_analysis(sim_data$data, delta_grid)
+#' sens_result <- sensitivity_analysis(sim_data$data, delta_grid,
+#'                                   treatment_cols = c("A1", "A2"),
+#'                                   covariate_cols = c("X1", "X2"))
 #' print(sens_result$summary)
 sensitivity_analysis <- function(data, delta_grid, divergence = "kl", 
                                 estimator = "one_step", confidence_level = 0.95, ...) {

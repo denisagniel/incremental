@@ -29,10 +29,12 @@ Tests a sequence of delta values and returns the largest feasible one.
 }
 \details{
 Extremely fast method for large datasets:
-1. Sample observations
-2. Test each delta in grid sequentially
-3. Stop at first infeasible (with early stopping)
-4. Return largest feasible with 5% safety margin
+\enumerate{
+\item Sample observations
+\item Test each delta in grid sequentially
+\item Stop at first infeasible (with early stopping)
+\item Return largest feasible with 5\% safety margin
+}
 
 Trade-off: Less precise than binary search, but much faster.
 Suitable for quick diagnostics.

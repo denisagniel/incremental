@@ -1,7 +1,7 @@
 #' @file estimation.R
 #' @title Estimation Functions for Vector Incremental Effects
 #' @description
-#' Main estimation functions for computing psi_delta = E[Y^{Q_delta}], the
+#' Main estimation functions for computing psi_delta = `E[Y^{Q_delta}]`, the
 #' counterfactual mean under incremental interventions. Implements outcome
 #' regression, IPW, and one-step (EIF-based) estimators with full inference.
 #' Also includes an experimental TMLE-style estimator with no supporting theory.
@@ -20,7 +20,7 @@
 #' @return Numeric, h(a, lambda) value for the specified divergence
 #'
 #' @details
-#' For a linear term z = lambda[1] + a' * lambda[2:(m+1)]:
+#' For a linear term `z = lambda[1] + a' * lambda[2:(m+1)]`:
 #' \itemize{
 #'   \item KL divergence: h(z) = exp(z)
 #'   \item Reverse KL: h(z) = -1/z (with safeguarding for z < 0, see Table 1 in paper)
@@ -60,10 +60,10 @@ compute_h_function_value <- function(a, lambda, divergence) {
   divergence_h_pair(linear_term, divergence)$h
 }
 
-#' Compute plugin estimate of E[Y^{Q_delta}]
+#' Compute plugin estimate of `E[Y^{Q_delta}]`
 #'
 #' @description
-#' Calculates the causal estimand E[Y^{Q_delta}] using the identification
+#' Calculates the causal estimand `E[Y^{Q_delta}]` using the identification
 #' results from the paper. Implements three estimation approaches: outcome
 #' regression, inverse probability weighting (IPW), and the efficient-influence-
 #' function-based estimator (named "doubly_robust" for backward compatibility;
@@ -80,7 +80,7 @@ compute_h_function_value <- function(a, lambda, divergence) {
 #' @param qdelta_results List of length n, per-observation Q_delta solver results.
 #'   Each element from compute_qdelta_per_obs() containing q_delta, lambda, converged.
 #'   If NULL, will compute automatically (slower).
-#' @param outcome_means Numeric matrix (n x 2^m), estimated E[Y|A=a,X] for each
+#' @param outcome_means Numeric matrix (n x 2^m), estimated `E[Y|A=a,X]` for each
 #'   observation and treatment combination. Rows are observations, columns are
 #'   treatment combinations in binary order.
 #' @param propensity_scores Numeric matrix (n x 2^m), estimated P(A=a|X) for each
@@ -90,15 +90,15 @@ compute_h_function_value <- function(a, lambda, divergence) {
 #' @param m Integer, number of treatments. Only needed if vectors = NULL.
 #'   Defaults to length(treatment_cols).
 #' @param method Character, estimation approach:
-#'   - "outcome_regression": E_n[sum_a mu(a,X) * p_0(a|X) * h(a, lambda)]
-#'   - "ipw": E_n[Y * I(A=a) * h(a, lambda)]
+#'   - "outcome_regression": `E_n[sum_a mu(a,X) * p_0(a|X) * h(a, lambda)]`
+#'   - "ipw": `E_n[Y * I(A=a) * h(a, lambda)]`
 #'   - "doubly_robust": Uses the full EIF (recommended; the name is kept for
 #'     backward compatibility but is a misnomer -- see Details)
 #' @param divergence Character, divergence type ("kl", "reverse_kl", "chi2", "hellinger")
 #' @param return Character, what to return: "mean" (default, returns scalar) or
 #'   "vector" (returns observation-level contributions)
 #'
-#' @return If return = "mean": Numeric scalar, estimated E[Y^{Q_delta}].
+#' @return If return = "mean": Numeric scalar, estimated `E[Y^{Q_delta}]`.
 #'   If return = "vector": Numeric vector (length n) of observation-level contributions.
 #'
 #' @details
@@ -375,7 +375,7 @@ target_outcome_model_tmle <- function(data, outcome_means, propensity_scores,
 #' Estimate counterfactual mean under incremental intervention distribution
 #'
 #' @description
-#' This is the primary user-facing function that estimates E[Y^{Q_delta}], the
+#' This is the primary user-facing function that estimates `E[Y^{Q_delta}]`, the
 #' counterfactual mean under the incremental intervention distribution Q_delta.
 #' Implements cross-fitted one-step estimation based on the efficient influence
 #' function (EIF), the estimator analyzed in the accompanying paper. Also
@@ -408,7 +408,7 @@ target_outcome_model_tmle <- function(data, outcome_means, propensity_scores,
 #'   propensity scores. If supplied together with `oracle_outcomes`, model
 #'   fitting is bypassed and these are used directly. Default: NULL.
 #' @param oracle_outcomes Optional numeric matrix (n x 2^m) of known outcome
-#'   means E[Y|A=a,X]. Must be supplied together with `oracle_propensities`.
+#'   means `E[Y|A=a,X]`. Must be supplied together with `oracle_propensities`.
 #'   Default: NULL.
 #' @param estimator Character, final estimator type.
 #'   Options: "one_step" (recommended, EIF-based, the estimator analyzed in the
@@ -434,7 +434,7 @@ target_outcome_model_tmle <- function(data, outcome_means, propensity_scores,
 #'     \item "adaptive": Fixed threshold ε with adaptive delta_k(X) (localized margin)
 #'   }
 #' @param gamma Numeric, threshold rate parameter for vanishing threshold.
-#'   ε_n = C*n^{-γ}. Only used if threshold_type = "vanishing".
+#'   `ε_n = C*n^{-γ}`. Only used if threshold_type = "vanishing".
 #'   Default: NULL (auto-selects 0.3).
 #' @param epsilon Numeric, fixed threshold for adaptive estimator.
 #'   Only used if threshold_type = "adaptive". Default: 0.1.
@@ -453,12 +453,12 @@ target_outcome_model_tmle <- function(data, outcome_means, propensity_scores,
 #'   observation. Only used if threshold_type != "none". Default: 1.
 #' @param contrast Character, estimand specification. Options:
 #'   \itemize{
-#'     \item "absolute" (default): Estimate E[Y^{Q_delta}], the counterfactual mean
-#'     \item "difference": Estimate E[Y^{Q_delta}] - E[Y], the difference from observed mean
+#'     \item "absolute" (default): Estimate `E[Y^{Q_delta}]`, the counterfactual mean
+#'     \item "difference": Estimate `E[Y^{Q_delta}] - E[Y]`, the difference from observed mean
 #'   }
 #'   The "difference" option provides correct inference for the causal contrast via
 #'   modified EIF. Default: "absolute".
-#' @param prob_infeasible Numeric in [0, 1], maximum proportion of infeasible observations
+#' @param prob_infeasible Numeric in `[0, 1]`, maximum proportion of infeasible observations
 #'   allowed before erroring. If the proportion of observations with infeasible delta
 #'   is less than this threshold, estimation continues using only feasible observations
 #'   with a warning. Default: 0 (strict mode: error if even one observation is infeasible).
@@ -476,7 +476,7 @@ target_outcome_model_tmle <- function(data, outcome_means, propensity_scores,
 #'   size).
 #' @return List containing:
 #' \describe{
-#'   \item{estimate}{Numeric, point estimate of E[Y^{Q_delta}] or E[Y^{Q_delta}] - E[Y]}
+#'   \item{estimate}{Numeric, point estimate of `E[Y^{Q_delta}]` or `E[Y^{Q_delta}] - E[Y]`}
 #'   \item{se}{Numeric, standard error from EIF or bootstrap}
 #'   \item{ci_lower}{Numeric, lower (1-alpha)/2 confidence bound}
 #'   \item{ci_upper}{Numeric, upper (1-alpha)/2 confidence bound}
@@ -495,7 +495,7 @@ target_outcome_model_tmle <- function(data, outcome_means, propensity_scores,
 #'
 #' @details
 #' The function implements the estimation procedure described in the paper:
-#' 1. Estimates nuisance functions: propensity scores P(A|X) and outcome models E[Y|A,X]
+#' 1. Estimates nuisance functions: propensity scores P(A|X) and outcome models `E[Y|A,X]`
 #' 2. For each observation, solves for Q_delta distribution using constrained optimization
 #' 3. Computes the one-step estimate from the EIF (or the experimental TMLE-style estimator)
 #' 4. Provides valid inference via influence function variance or bootstrap
@@ -505,7 +505,7 @@ target_outcome_model_tmle <- function(data, outcome_means, propensity_scores,
 #' - **"none"** (default): Standard estimator assuming all treatments active everywhere.
 #'   Use when propensities are well away from 0 and 1.
 #'
-#' - **"vanishing"**: Vanishing threshold ε_n → 0 with active sets K_{ε_n}(X).
+#' - **"vanishing"**: Vanishing threshold ε_n → 0 with active sets `K_{ε_n}(X)`.
 #'   Asymptotically optimal under global margin condition. Automatically selects
 #'   rates (gamma, alpha) or accepts user values. Use for large samples with
 #'   theory-driven analysis.
@@ -1507,7 +1507,7 @@ validate_stratification_feasibility <- function(patterns, min_stratum_size = 100
 #'   estimator, no thresholding), "vanishing" (vanishing threshold ε_n → 0), or
 #'   "adaptive" (fixed threshold ε with adaptive delta). Forwarded to
 #'   \code{\link{estimate_qdelta_mean}}. Default "none" preserves prior behavior.
-#' @param gamma Numeric, threshold rate for the vanishing estimator (ε_n = C n^{-γ}).
+#' @param gamma Numeric, threshold rate for the vanishing estimator (`ε_n = C n^{-γ}`).
 #'   Only used when threshold_type = "vanishing". Default NULL (auto-selected).
 #' @param epsilon Numeric, fixed threshold for the adaptive estimator. Only used
 #'   when threshold_type = "adaptive". Default 0.1.
@@ -1883,30 +1883,6 @@ estimate_pattern_effect <- function(data, pattern_info, delta,
   ))
 }
 
-#' Aggregate stratified estimation results
-#'
-#' @description
-#' Aggregates pattern-specific estimates via weighted averaging with delta
-#' method variance estimation. Uses aggregated EIF for variance.
-#'
-#' @param pattern_results List, results from estimate_pattern_effect() for each pattern
-#' @param patterns Data frame, pattern information from identify_eligibility_patterns()
-#' @param confidence_level Numeric, confidence level for intervals
-#'
-#' @return List containing:
-#' \describe{
-#'   \item{estimate}{Numeric, aggregated estimate ψ = Σ p_k ψ_k}
-#'   \item{se}{Numeric, standard error from aggregated EIF}
-#'   \item{ci_lower}{Numeric, lower confidence bound}
-#'   \item{ci_upper}{Numeric, upper confidence bound}
-#'   \item{p_value}{Numeric, two-sided p-value for H0: ψ = 0}
-#'   \item{eif_values}{Numeric vector (length n), aggregated EIF}
-#'   \item{pattern_summaries}{Data frame with per-pattern estimates and weights}
-#'   \item{n_patterns_used}{Integer, number of patterns with successful estimation}
-#'   \item{coverage}{Numeric, proportion of sample in successfully estimated patterns}
-#' }
-#'
-#' @keywords internal
 #' Combine per-pattern estimates into a stratified aggregate (core math)
 #'
 #' Single source of truth for the stratified aggregation, shared by
@@ -2005,6 +1981,30 @@ estimate_pattern_effect <- function(data, pattern_info, delta,
   )
 }
 
+#' Aggregate stratified estimation results
+#'
+#' @description
+#' Aggregates pattern-specific estimates via weighted averaging with delta
+#' method variance estimation. Uses aggregated EIF for variance.
+#'
+#' @param pattern_results List, results from estimate_pattern_effect() for each pattern
+#' @param patterns Data frame, pattern information from identify_eligibility_patterns()
+#' @param confidence_level Numeric, confidence level for intervals
+#'
+#' @return List containing:
+#' \describe{
+#'   \item{estimate}{Numeric, aggregated estimate ψ = Σ p_k ψ_k}
+#'   \item{se}{Numeric, standard error from aggregated EIF}
+#'   \item{ci_lower}{Numeric, lower confidence bound}
+#'   \item{ci_upper}{Numeric, upper confidence bound}
+#'   \item{p_value}{Numeric, two-sided p-value for H0: ψ = 0}
+#'   \item{eif_values}{Numeric vector (length n), aggregated EIF}
+#'   \item{pattern_summaries}{Data frame with per-pattern estimates and weights}
+#'   \item{n_patterns_used}{Integer, number of patterns with successful estimation}
+#'   \item{coverage}{Numeric, proportion of sample in successfully estimated patterns}
+#' }
+#'
+#' @keywords internal
 aggregate_stratified_results <- function(pattern_results, patterns, confidence_level = 0.95) {
 
   # Extract successful patterns
@@ -2315,7 +2315,7 @@ stratified_contrast <- function(contributions_a, contributions_b,
 #' Estimate counterfactual mean with eligibility stratification
 #'
 #' @description
-#' Estimates E[Y^{Q_delta}] when treatments are only defined for subsets of
+#' Estimates `E[Y^{Q_delta}]` when treatments are only defined for subsets of
 #' observations (e.g., medication adherence only measurable if prescribed).
 #' Stratifies by eligibility pattern, estimates within each pattern, and
 #' aggregates via weighted averaging with delta method inference.
@@ -2346,7 +2346,7 @@ stratified_contrast <- function(contributions_a, contributions_b,
 #'   "reverse_kl", "chi2", "hellinger". Default: "kl".
 #' @param min_stratum_size Integer, minimum observations per pattern to include
 #'   in estimation. Patterns with fewer observations are excluded. Default: 100.
-#' @param min_realized_coverage Numeric in [0, 1], minimum fraction of the
+#' @param min_realized_coverage Numeric in `[0, 1]`, minimum fraction of the
 #'   stratified sample that must be covered by SUCCESSFULLY-estimated patterns.
 #'   Unlike the pre-estimation feasibility check (which only verifies identified
 #'   patterns meet `min_stratum_size`), this reflects estimation failures: if
@@ -2384,7 +2384,7 @@ stratified_contrast <- function(contributions_a, contributions_b,
 #'   pattern (eligibility subsetting is separate from and prior to thresholding).
 #'   Forwarded to \code{\link{estimate_pattern_effect}}. Default "none" preserves
 #'   prior behavior.
-#' @param gamma Numeric, threshold rate for the vanishing estimator (ε_n = C n^{-γ}).
+#' @param gamma Numeric, threshold rate for the vanishing estimator (`ε_n = C n^{-γ}`).
 #'   Only used when threshold_type = "vanishing". Default NULL (auto-selected).
 #' @param epsilon Numeric, fixed threshold for the adaptive estimator. Only used
 #'   when threshold_type = "adaptive". Default 0.1.
@@ -2450,7 +2450,7 @@ stratified_contrast <- function(contributions_a, contributions_b,
 #' 4. Aggregates: ψ = Σ_k p_k ψ_k with delta method variance
 #'
 #' **Estimand interpretation:**
-#' The estimated quantity is E[Y^{Q_delta | Z}] where Z = (Z_1, ..., Z_m)
+#' The estimated quantity is `E[Y^{Q_delta | Z}]` where Z = (Z_1, ..., Z_m)
 #' are eligibility indicators. This answers: "What if we improved treatment
 #' quality/adherence by factor δ_k for treatments k that are currently eligible,
 #' without changing eligibility itself?"
@@ -2829,11 +2829,11 @@ estimate_qdelta_mean_stratified <- function(data, delta,
 #' Estimate Vector Incremental Effects with Vanishing Threshold
 #'
 #' Implements vanishing threshold estimator with threshold-based active set
-#' selection. Uses ε_n → 0 with active sets K_{ε_n}(X) = {k: m_k(X) ∈ [ε_n, 1-ε_n]}
+#' selection. Uses ε_n → 0 with active sets `K_{ε_n}(X) = {k: m_k(X) ∈ [ε_n, 1-ε_n]}`
 #' to satisfy margin conditions required for asymptotic normality.
 #'
 #' @inheritParams estimate_qdelta_mean
-#' @param gamma Numeric, threshold rate parameter. ε_n = C*n^{-γ}. If NULL
+#' @param gamma Numeric, threshold rate parameter. `ε_n = C*n^{-γ}`. If NULL
 #'   (default), automatically selects γ = 0.3. The asymptotic-normality condition
 #'   γ > 1/(2(1+β)) (β = margin exponent of the data law) is not enforced: β is
 #'   not estimable in practice and does not affect whether the estimate is
@@ -2841,7 +2841,7 @@ estimate_qdelta_mean_stratified <- function(data, delta,
 #' @param min_active Integer, minimum number of active treatments required per
 #'   observation. Observations with fewer active treatments contribute zero to EIF.
 #'   Default: 1.
-#' @param eps_constant Numeric, constant C in ε_n = C*n^{-γ}. Default: 1.
+#' @param eps_constant Numeric, constant C in `ε_n = C*n^{-γ}`. Default: 1.
 #'
 #' @param max_qdelta_failure_rate Numeric in `[0, 1]`: the largest share of observations whose
 #'   Q_delta solve may fail and fall back to Q_delta = P0 (no shift for that observation, a bias
@@ -2866,7 +2866,7 @@ estimate_qdelta_mean_stratified <- function(data, delta,
 #' The standard estimator assumes all treatments are active (m_k(X) bounded away from 0 and 1).
 #' When treatments have marginal propensities near boundaries, this assumption fails.
 #'
-#' Solution: Only use "active" treatments where m_k(X) ∈ [ε_n, 1-ε_n] with ε_n → 0.
+#' Solution: Only use "active" treatments where `m_k(X) ∈ [ε_n, 1-ε_n]` with ε_n → 0.
 #' As n → ∞:
 #' - ε_n → 0 (more treatments become active)
 #' - But ε_n decreases slowly enough to maintain margin condition
@@ -2875,7 +2875,7 @@ estimate_qdelta_mean_stratified <- function(data, delta,
 #'
 #' For asymptotic normality, need:
 #' 1. γ > 1/(2β) where β is nuisance rate
-#' 2. α ≥ max{1/4, 1/2 - γ(β-1)} where α is PS rate
+#' 2. `α ≥ max{1/4, 1/2 - γ(β-1)}` where α is PS rate
 #'
 #' **Automatic selection (if gamma/alpha not provided):**
 #' - γ = 0.3 (safe for β ≥ 2, i.e., parametric nuisances)
@@ -2883,7 +2883,7 @@ estimate_qdelta_mean_stratified <- function(data, delta,
 #'
 #' **Insufficient active treatments:**
 #'
-#' Observations with < min_active treatments in [ε_n, 1-ε_n] contribute zero
+#' Observations with < min_active treatments in `[ε_n, 1-ε_n]` contribute zero
 #' to the EIF. The user should verify this fraction is acceptable or adjust ε_n.
 #'
 #' **Comparison to standard estimator:**
@@ -3140,12 +3140,12 @@ estimate_qdelta_vanishing_threshold <- function(data, delta,
 #' Estimate Vector Incremental Effects with Adaptive Delta
 #'
 #' Implements adaptive estimator with fixed threshold ε and observation-specific
-#' delta_k(X). Uses active sets K_ε(X) = {k: m_k(X) ∈ [ε, 1-ε]} but adapts delta
+#' delta_k(X). Uses active sets `K_ε(X) = {k: m_k(X) ∈ [ε, 1-ε]}` but adapts delta
 #' based on propensity patterns to satisfy localized margin conditions.
 #'
 #' @inheritParams estimate_qdelta_mean
 #' @param epsilon Numeric, fixed threshold for active set computation. Treatments
-#'   with marginal propensities in [ε, 1-ε] are active. Typical values: 0.05-0.15.
+#'   with marginal propensities in `[ε, 1-ε]` are active. Typical values: 0.05-0.15.
 #' @param delta Numeric vector (length m) of target delta values. These are adapted
 #'   per observation based on propensity patterns.
 #' @param scaling_method Character, how to scale delta for inactive treatments:
@@ -3190,7 +3190,7 @@ estimate_qdelta_vanishing_threshold <- function(data, delta,
 #'
 #' **Delta adaptation:**
 #' For each observation:
-#' - Active treatments (m_k(X) ∈ [ε, 1-ε]): Use target delta
+#' - Active treatments (`m_k(X) ∈ [ε, 1-ε]`): Use target delta
 #' - Inactive treatments: Scale delta based on distance from boundary
 #'
 #' This satisfies a **localized margin condition** (weaker than global condition

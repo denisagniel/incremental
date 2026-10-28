@@ -25,7 +25,7 @@ signature stability)}
 \item{lambda0}{Numeric scalar, fixed intercept}
 }
 \value{
-Logical, `TRUE` if all active linear terms are inside the domain
+Logical, \code{TRUE} if all active linear terms are inside the domain
 }
 \description{
 Check constraint satisfaction for m-dimensional system

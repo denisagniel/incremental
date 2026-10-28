@@ -9,30 +9,29 @@ divergence_h_pair(x, divergence)
 \arguments{
 \item{x}{Numeric vector or matrix of linear terms. Any shape; computation
 is elementwise, so this works for a single scalar (per-observation
-solver loops), a vector (one observation, all `2^m` combinations), or a
-matrix (many observations x combinations, e.g. `eif.R`'s `LAMBDA %*%
-t(a_extended_matrix)`).}
+solver loops), a vector (one observation, all \code{2^m} combinations), or a
+matrix (many observations x combinations, e.g. \code{eif.R}'s \code{LAMBDA \%*\% t(a_extended_matrix)}).}
 
 \item{divergence}{Character, one of "kl", "reverse_kl", "chi2", "hellinger".}
 }
 \value{
 List with:
-  \item{h}{h(x) at the clipped x, same shape as `x`}
-  \item{h_prime}{h'(x) at the SAME clipped x, same shape as `x`}
-  \item{n_clipped}{integer count of elements where clipping was active
-    (diagnostic; nonzero means an iterate came within the numerical
-    safety buffer of the domain boundary -- for a converged solution this
-    should essentially never happen, since
-    `check_constraint_satisfaction_*()` rejects iterates well before this
-    buffer is reached)}
+\item{h}{h(x) at the clipped x, same shape as \code{x}}
+\item{h_prime}{h'(x) at the SAME clipped x, same shape as \code{x}}
+\item{n_clipped}{integer count of elements where clipping was active
+(diagnostic; nonzero means an iterate came within the numerical
+safety buffer of the domain boundary -- for a converged solution this
+should essentially never happen, since
+\verb{check_constraint_satisfaction_*()} rejects iterates well before this
+buffer is reached)}
 }
 \description{
 Single source of truth for the divergence conjugate function h(x) and its
-derivative h'(x), shared by the Newton solver (`fast_qdelta_solver.R`), the
-EIF computation (`eif.R`, `eif_active.R`), and the estimation helper
-(`estimation.R`).
+derivative h'(x), shared by the Newton solver (\code{fast_qdelta_solver.R}), the
+EIF computation (\code{eif.R}, \code{eif_active.R}), and the estimation helper
+(\code{estimation.R}).
 
-[LEARN 2026-08-10] Before this file existed, h(x)/h'(x) were reimplemented
+\verb{[LEARN 2026-08-10]} Before this file existed, h(x)/h'(x) were reimplemented
 independently at ~6 call sites across 4 files, with 4-5 different
 boundary-clipping conventions for reverse_kl and hellinger (chi2 and kl
 were unaffected -- chi2 has no singularity, kl's only guard is overflow
@@ -49,21 +48,21 @@ defect. See session_notes/2026-08-10.md and MEMORY.md.
 Fix: one function, called everywhere. Clip the linear term ONCE, then
 evaluate both h and h' at the SAME clipped value. The chosen constants are
 exactly the pre-existing solver-weights convention
-(`compute_q_delta_weights_internal()`), re-expressed as a symmetric clip so
+(\code{compute_q_delta_weights_internal()}), re-expressed as a symmetric clip so
 the old two-line "clip + override near boundary" pattern collapses to one
 clip + one formula, with no numerical change in any regime the solver's
 weights function already covered (verified: for reverse_kl, the old
-override value 1e12 is exactly `-1 / (-REVERSE_KL_DOMAIN_BUFFER)`, i.e.
+override value 1e12 is exactly \code{-1 / (-REVERSE_KL_DOMAIN_BUFFER)}, i.e.
 what the clipped formula evaluates to at the boundary, by construction of
 the constants in constants.R -- the now-deleted H_VALUE_MAX/H_VALUE_SMALL
 constants were the old, inconsistent override values).
 
 Computes h(x) and h'(x) for the specified divergence's constrained-tilt
-problem, where x is the linear term `lambda[1] + a' lambda[2:(m+1)]`. x is
+problem, where x is the linear term \verb{lambda[1] + a' lambda[2:(m+1)]}. x is
 clipped to the interior of h's domain before EITHER h or h' is evaluated,
 so both are guaranteed to be functions of the identical (possibly clipped)
-argument -- required for `h'` to be the correct Jacobian entry for the
-residual actually computed from `h`.
+argument -- required for \verb{h'} to be the correct Jacobian entry for the
+residual actually computed from \code{h}.
 }
 \author{
 Denis Agniel

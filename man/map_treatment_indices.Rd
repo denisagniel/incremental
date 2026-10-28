@@ -13,9 +13,11 @@ map_treatment_indices(active_indices, m = NULL)
 }
 \value{
 Data frame with columns:
-  - original_index: Original treatment number (1 to m)
-  - reduced_index: Index in reduced set (1 to |active|)
-  - treatment_name: Name (e.g., "A3")
+\itemize{
+\item original_index: Original treatment number (1 to m)
+\item reduced_index: Index in reduced set (1 to |active|)
+\item treatment_name: Name (e.g., "A3")
+}
 }
 \description{
 Creates explicit mapping between original treatment indices (1 to m) and
@@ -24,7 +26,7 @@ and avoiding off-by-one errors when working with subsets.
 }
 \details{
 When working with reduced treatment sets, it's helpful to have explicit mapping
-between original and reduced indices. For example, if active treatments are {2,5,7},
+between original and reduced indices. For example, if active treatments are \verb{\{2,5,7\}},
 the mapping is: 2→1, 5→2, 7→3.
 }
 \examples{

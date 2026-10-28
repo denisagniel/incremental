@@ -14,11 +14,11 @@ compute_target_marginals(
 \arguments{
 \item{propensity_scores_i}{Numeric vector, propensity scores for observation i}
 
-\item{treatment_combinations}{Matrix, all treatment combinations. Optional if `m` is provided.}
+\item{treatment_combinations}{Matrix, all treatment combinations. Optional if \code{m} is provided.}
 
 \item{delta}{Numeric vector, odds scaling factors}
 
-\item{m}{Integer, number of treatments. Required if `treatment_combinations` is NULL. Can be inferred from `length(delta)` as convenience fallback.}
+\item{m}{Integer, number of treatments. Required if \code{treatment_combinations} is NULL. Can be inferred from \code{length(delta)} as convenience fallback.}
 }
 \value{
 Numeric vector, target marginal probabilities

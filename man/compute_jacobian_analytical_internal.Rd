@@ -23,21 +23,21 @@ compute_jacobian_analytical_internal(
 
 \item{divergence}{Character, divergence type}
 
-\item{b_ext_active}{Optional pre-built extended design `cbind(1, vectors_active)`}
+\item{b_ext_active}{Optional pre-built extended design \code{cbind(1, vectors_active)}}
 
 \item{moment_scatter}{Optional pre-computed \eqn{S_2}. Supplied by
-`newton_qdelta()` for `divergence = "chi2"`, whose \eqn{h' \equiv 1/2} makes
-\eqn{S_2} independent of `lambda` and therefore hoistable out of the Newton
-loop. Must be `NULL` for every other divergence.}
+\code{newton_qdelta()} for \code{divergence = "chi2"}, whose \eqn{h' \equiv 1/2} makes
+\eqn{S_2} independent of \code{lambda} and therefore hoistable out of the Newton
+loop. Must be \code{NULL} for every other divergence.}
 
-\item{row_perm}{Optional pre-computed row permutation `c(2:(m+1), 1)`}
+\item{row_perm}{Optional pre-computed row permutation \code{c(2:(m+1), 1)}}
 }
 \value{
 (m+1) x (m+1) numeric matrix
 }
 \description{
 Matrix-form assembly: the full Jacobian is the weighted second-moment scatter
-`compute_moment_scatter_internal()` with its rows permuted from
+\code{compute_moment_scatter_internal()} with its rows permuted from
 intercept-first to marginals-first order. See the "Matrix form" section in this
 file's header for why this is equivalent to the paper's sum over \eqn{2^m}
 atoms.

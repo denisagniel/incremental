@@ -181,7 +181,7 @@ find_max_uniform_delta <- function(propensity_scores,
 #' @param verbose Logical, print progress messages (default FALSE)
 #'
 #' @details
-#' For each treatment k, performs binary search to find the maximum delta[k]
+#' For each treatment k, performs binary search to find the maximum `delta[k]`
 #' such that the resulting delta vector is feasible, with all other treatments
 #' set to their baseline values.
 #'
@@ -341,11 +341,11 @@ find_max_per_treatment_delta <- function(propensity_scores,
 #' @details
 #' This function performs a 1D search along a ray: delta = α * direction,
 #' starting from α = 0 (if all direction components ≥ 0) or α where
-#' delta[k] = 1 for the most restrictive k.
+#' `delta[k] = 1` for the most restrictive k.
 #'
 #' The direction vector can be any values, but must satisfy:
-#' - If direction[k] < 0: delta[k] = 1 + α * direction[k] ≥ 1 for feasible α
-#' - All components of (α * direction) must keep delta[k] ≥ 1
+#' - If `direction[k] < 0`: `delta[k] = 1 + α * direction[k] ≥ 1` for feasible α
+#' - All components of (α * direction) must keep `delta[k] ≥ 1`
 #'
 #' Common use cases:
 #' - Uniform: direction = rep(1, m)
@@ -562,9 +562,9 @@ find_max_delta_in_direction <- function(propensity_scores,
 #' @param verbose Logical, print progress (default FALSE)
 #'
 #' @details
-#' For each treatment k, finds the range [L_k, U_k] of feasible values while
+#' For each treatment k, finds the range `[L_k, U_k]` of feasible values while
 #' holding other treatments at baseline. The feasible region is contained in
-#' the hyperrectangle: ∏_{k=1}^m [L_k, U_k].
+#' the hyperrectangle: `∏_{k=1}^m [L_k, U_k]`.
 #'
 #' This provides a conservative outer approximation of the feasible region.
 #'

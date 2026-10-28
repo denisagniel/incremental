@@ -28,10 +28,12 @@ sensitivity_analysis(
 }
 \value{
 List containing:
-  - estimates: vector of estimates for each delta combination
-  - confidence_intervals: matrix of confidence intervals
-  - delta_grid: grid of delta values used
-  - summary: summary statistics
+\itemize{
+\item estimates: vector of estimates for each delta combination
+\item confidence_intervals: matrix of confidence intervals
+\item delta_grid: grid of delta values used
+\item summary: summary statistics
+}
 }
 \description{
 Performs sensitivity analysis by varying the delta values and examining
@@ -47,6 +49,8 @@ delta_grid <- list(
   c(1.2, 1.5), c(1.5, 2.0), c(2.0, 1.2)
 )
 
-sens_result <- sensitivity_analysis(sim_data$data, delta_grid)
+sens_result <- sensitivity_analysis(sim_data$data, delta_grid,
+                                  treatment_cols = c("A1", "A2"),
+                                  covariate_cols = c("X1", "X2"))
 print(sens_result$summary)
 }

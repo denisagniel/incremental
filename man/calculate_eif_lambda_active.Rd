@@ -42,9 +42,11 @@ instead of computing it on the fly. Used for threshold-based active set selectio
 }
 \details{
 This function differs from the original calculate_eif_lambda in that it:
-- Takes active set as input rather than computing it
-- Uses compute_omega_reduced() from treatment_subset_utils.R
-- Handles empty active sets (returns zero EIF_lambda)
+\itemize{
+\item Takes active set as input rather than computing it
+\item Uses compute_omega_reduced() from treatment_subset_utils.R
+\item Handles empty active sets (returns zero EIF_lambda)
+}
 
 If active_indices is empty, returns zero vector (no active constraints,
 so lambda derivative is zero).

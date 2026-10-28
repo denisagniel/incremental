@@ -64,35 +64,6 @@ to_numeric_matrix <- function(data, cols) {
   return(clean_mat)
 }
 
-#' Train XGBoost model with early stopping
-#'
-#' @description
-#' Internal helper that trains an xgboost model using an 80/20 internal
-#' train/validation split for early stopping. Prevents overfitting that
-#' occurs with fixed nrounds on small datasets.
-#'
-#' @param X Numeric matrix of features
-#' @param y Numeric vector of labels
-#' @param params List of xgboost parameters (must include objective). Any of the
-#'   tuned regularization defaults below (max_depth, eta, subsample,
-#'   colsample_bytree, min_child_weight) supplied here override the default.
-#' @param nrounds_max Maximum number of boosting rounds (default 500)
-#' @param early_stopping_rounds Stop if no improvement for this many rounds (default 10)
-#' @param eval_fraction Fraction of data used for early stopping evaluation (default 0.2)
-#'
-#' @details
-#' Regularization defaults are deliberately more conservative than xgboost's own
-#' (which are max_depth = 6, eta = 0.3). Shallow trees with a small learning rate
-#' and row/column subsampling substantially reduce the finite-sample
-#' regularization bias of the fitted nuisance functions, which otherwise does not
-#' vanish fast enough to clear the o_p(n^{-1/2}) product-rate condition and
-#' degrades confidence-interval coverage at large n (validated in
-#' sims/study2/analysis; the tuned learner tracks a random forest and the
-#' oracle-nuisance floor, whereas the xgboost defaults do not). Callers may
-#' override any default by supplying it in `params`.
-#'
-#' @return Trained xgboost model
-#' @keywords internal
 #' Default tuned XGBoost regularization parameters (internal)
 #'
 #' Single source of truth for the conservative regularization defaults used by
@@ -117,6 +88,35 @@ resolve_xgb_params <- function(xgb_params) {
   if (is.null(xgb_params)) default_xgb_params() else modifyList(default_xgb_params(), xgb_params)
 }
 
+#' Train XGBoost model with early stopping
+#'
+#' @description
+#' Internal helper that trains an xgboost model using an 80/20 internal
+#' train/validation split for early stopping. Prevents overfitting that
+#' occurs with fixed nrounds on small datasets.
+#'
+#' @param X Numeric matrix of features
+#' @param y Numeric vector of labels
+#' @param params List of xgboost parameters (must include objective). Any of the
+#'   tuned regularization defaults below (max_depth, eta, subsample,
+#'   colsample_bytree, min_child_weight) supplied here override the default.
+#' @param nrounds_max Maximum number of boosting rounds (default 500)
+#' @param early_stopping_rounds Stop if no improvement for this many rounds (default 10)
+#' @param eval_fraction Fraction of data used for early stopping evaluation (default 0.2)
+#'
+#' @details
+#' Regularization defaults are deliberately more conservative than xgboost's own
+#' (which are max_depth = 6, eta = 0.3). Shallow trees with a small learning rate
+#' and row/column subsampling substantially reduce the finite-sample
+#' regularization bias of the fitted nuisance functions, which otherwise does not
+#' vanish fast enough to clear the `o_p(n^{-1/2})` product-rate condition and
+#' degrades confidence-interval coverage at large n (validated in
+#' sims/study2/analysis; the tuned learner tracks a random forest and the
+#' oracle-nuisance floor, whereas the xgboost defaults do not). Callers may
+#' override any default by supplying it in `params`.
+#'
+#' @return Trained xgboost model
+#' @keywords internal
 train_xgboost_early_stop <- function(X, y, params,
                                      nrounds_max = 500,
                                      early_stopping_rounds = 10,
@@ -1501,7 +1501,7 @@ estimate_propensity_scores <- function(data, treatment_cols, covariate_cols,
 #' Estimate outcome regression models for vector treatments
 #'
 #' @description
-#' Estimates conditional outcome means E[Y | A = a, X] for all 2^m treatment
+#' Estimates conditional outcome means `E[Y | A = a, X]` for all 2^m treatment
 #' combinations. Fits stratified models (one per combination) when feasible, or
 #' a single model with treatment interactions for high-dimensional cases.
 #' Required for EIF-based (one-step) estimation.
@@ -1533,7 +1533,7 @@ estimate_propensity_scores <- function(data, treatment_cols, covariate_cols,
 #'   E.g., c("SL.glm", "SL.gam", "SL.randomForest"). Required if method = "superlearner".
 #' @param outcome_fit Character, how to model the outcome across treatments:
 #'   - **"pooled"** (default): a single model on covariates and treatment
-#'     indicators, predicting E[Y | A = a, X] for each combination by setting the
+#'     indicators, predicting `E[Y | A = a, X]` for each combination by setting the
 #'     treatment columns to a. Borrows strength across the full sample; robust as
 #'     the treatment space grows. Lower mu-hat RMSE than stratified for m >= 3.
 #'   - **"stratified"**: a separate model per treatment combination (assumption-free
@@ -1545,7 +1545,7 @@ estimate_propensity_scores <- function(data, treatment_cols, covariate_cols,
 #'
 #' @return List containing:
 #' \describe{
-#'   \item{outcome_means}{Numeric matrix (n x 2^m), E[Y|A=a,X] predictions for all combos}
+#'   \item{outcome_means}{Numeric matrix (n x 2^m), `E[Y|A=a,X]` predictions for all combos}
 #'   \item{models}{List of fitted models (one per combination if feasible, else single model)}
 #'   \item{method}{Character, method used (for reference)}
 #'   \item{treatment_combinations}{Matrix (2^m x m), binary treatment patterns}
@@ -1555,7 +1555,7 @@ estimate_propensity_scores <- function(data, treatment_cols, covariate_cols,
 #' @details
 #' **Modeling approach:** By default (`outcome_fit = "pooled"`) the function fits a
 #' single outcome regression on covariates and treatment indicators, then predicts
-#' E[Y | A = a, X] for each combination a = (a_1, ..., a_m) by holding the treatment
+#' `E[Y | A = a, X]` for each combination a = (a_1, ..., a_m) by holding the treatment
 #' columns at a. This borrows strength across the whole sample and remains stable as
 #' the treatment space grows.
 #'
@@ -1903,7 +1903,7 @@ estimate_outcome_models <- function(data, treatment_cols, covariate_cols,
 #' Pooled outcome model for large treatment spaces (internal)
 #'
 #' Fits a single outcome regression on covariates and treatment indicators
-#' (treatments as features, not strata), then predicts E[Y | A = a, X] for every
+#' (treatments as features, not strata), then predicts `E[Y | A = a, X]` for every
 #' treatment combination by setting the treatment columns to a. Used by
 #' \code{estimate_outcome_models} for the default \code{outcome_fit = "pooled"} to
 #' avoid the per-combination grand-mean fallback that starves at high m. Returns
@@ -1996,7 +1996,7 @@ fit_pooled_outcome_model <- function(data, treatment_cols, covariate_cols,
 #' Compute noisy true nuisance functions for testing
 #'
 #' This function is for testing/validation purposes only. It takes true
-#' nuisance functions and adds noise at a specified rate (e.g., n^{-1/4})
+#' nuisance functions and adds noise at a specified rate (e.g., `n^{-1/4}`)
 #' to simulate estimation error.
 #'
 #' @param data tibble, observed data with treatment, covariate, and outcome columns
@@ -2006,7 +2006,7 @@ fit_pooled_outcome_model <- function(data, treatment_cols, covariate_cols,
 #' @param true_outcome_means Matrix, true outcome means (n × 2^m) - optional
 #' @param data_obj List, data object with true_params (alternative to above) - optional
 #' @param noise_level Character or numeric, noise level specification
-#'   - Character: "n^{-1/4}", "n^{-1/2}", etc. (parsed to extract exponent)
+#'   - Character: `"n^{-1/4}"`, `"n^{-1/2}"`, etc. (parsed to extract exponent)
 #'   - Numeric: direct noise scale (e.g., 0.1)
 #' @return List containing:
 #'   - propensity_scores: matrix of noisy propensity scores (n × 2^m)

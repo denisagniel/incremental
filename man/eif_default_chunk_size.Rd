@@ -12,7 +12,7 @@ eif_default_chunk_size(m, n_workers = 1L)
 \item{n_workers}{Integer, number of parallel workers (>= 1); K chunks are resident at once.}
 }
 \value{
-Integer chunk size in `[EIF_MIN_CHUNK, EIF_MAX_CHUNK]`.
+Integer chunk size in \verb{[EIF_MIN_CHUNK, EIF_MAX_CHUNK]}.
 }
 \description{
 Implements efficient influence function (EIF) for vector incremental treatment
@@ -26,7 +26,7 @@ per-observation Q_delta solver and EIF lambda derivatives.
 Denis Agniel
 Default EIF chunk size from a per-worker memory budget (internal)
 
-`eif_compute_chunk()` holds about `EIF_LIVE_MATRICES` n_chunk x 2^m double matrices at its peak
+\code{eif_compute_chunk()} holds about \code{EIF_LIVE_MATRICES} n_chunk x 2^m double matrices at its peak
 (propensity and outcome slices, indicator, h, h', Q, Y, Phi, the residual and its temporaries),
 counted from that function's body. The earlier model assumed 6 and a floor of 1000 observations,
 which at m >= 12 allocated several times the stated budget. Chunking only partitions the

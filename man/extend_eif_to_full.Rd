@@ -16,7 +16,7 @@ Must have length equal to length(eif_reduced).}
 }
 \value{
 Numeric vector (length n_full) with EIF values in correct positions and
-  zeros elsewhere
+zeros elsewhere
 }
 \description{
 When estimating within a subset of observations (e.g., one eligibility stratum),

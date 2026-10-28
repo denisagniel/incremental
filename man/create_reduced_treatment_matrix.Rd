@@ -32,14 +32,14 @@ rows (still all 2^m combinations), but reduces columns to only those needed.
 }
 \section{Architectural Separation}{
 
-These utilities operate at the **matrix level** (treatment combinations, propensities):
+These utilities operate at the \strong{matrix level} (treatment combinations, propensities):
 \itemize{
-  \item Binary treatment matrices: 2^m rows × m columns
-  \item Propensity vectors/matrices: n observations × 2^m combinations
-  \item Constraint Jacobians: (|active|+1) × (|active|+1)
+\item Binary treatment matrices: 2^m rows × m columns
+\item Propensity vectors/matrices: n observations × 2^m combinations
+\item Constraint Jacobians: (|active|+1) × (|active|+1)
 }
 
-For **data.frame level** operations (observation subsetting, column renaming),
+For \strong{data.frame level} operations (observation subsetting, column renaming),
 see \code{\link{estimate_pattern_effect}} in estimation.R, which handles
 eligibility-based data preparation before calling estimation functions.
 }

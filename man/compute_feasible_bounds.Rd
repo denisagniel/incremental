@@ -32,10 +32,10 @@ compute_feasible_bounds(
 \value{
 List containing:
 \describe{
-  \item{lower_bounds}{Numeric vector (length m), lower bounds per treatment}
-  \item{upper_bounds}{Numeric vector (length m), upper bounds per treatment}
-  \item{uniform_lower}{Numeric scalar, max of lower bounds (uniform constraint)}
-  \item{uniform_upper}{Numeric scalar, min of upper bounds (uniform constraint)}
+\item{lower_bounds}{Numeric vector (length m), lower bounds per treatment}
+\item{upper_bounds}{Numeric vector (length m), upper bounds per treatment}
+\item{uniform_lower}{Numeric scalar, max of lower bounds (uniform constraint)}
+\item{uniform_upper}{Numeric scalar, min of upper bounds (uniform constraint)}
 }
 }
 \description{
@@ -43,9 +43,9 @@ Computes axis-aligned bounding box for the feasible region by finding
 minimum and maximum feasible delta for each treatment coordinate.
 }
 \details{
-For each treatment k, finds the range [L_k, U_k] of feasible values while
+For each treatment k, finds the range \verb{[L_k, U_k]} of feasible values while
 holding other treatments at baseline. The feasible region is contained in
-the hyperrectangle: ∏_{k=1}^m [L_k, U_k].
+the hyperrectangle: \verb{∏_\{k=1\}^m [L_k, U_k]}.
 
 This provides a conservative outer approximation of the feasible region.
 }

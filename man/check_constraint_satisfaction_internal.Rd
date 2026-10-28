@@ -22,12 +22,12 @@ signature stability)}
 
 \item{divergence}{Character, divergence type}
 
-\item{b_ext_active}{Optional pre-built extended design `cbind(1, vectors_active)`}
+\item{b_ext_active}{Optional pre-built extended design \code{cbind(1, vectors_active)}}
 }
 \value{
-`TRUE` if every active linear term is strictly inside the divergence's
-  domain (with the numerical buffer), `FALSE` otherwise. Divergences with no
-  domain restriction (`kl`) always return `TRUE`.
+\code{TRUE} if every active linear term is strictly inside the divergence's
+domain (with the numerical buffer), \code{FALSE} otherwise. Divergences with no
+domain restriction (\code{kl}) always return \code{TRUE}.
 }
 \description{
 Check constraint satisfaction for internal normalization

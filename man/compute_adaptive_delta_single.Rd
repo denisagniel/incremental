@@ -23,9 +23,11 @@ compute_adaptive_delta_single(
 \item{epsilon}{Numeric, the fixed threshold for active set}
 
 \item{scaling_method}{Character, how to scale delta for inactive treatments:
-- "zero": Set to 1.0 (no shift, **paper's canonical definition**)
-- "proportional": Scale proportionally to distance from boundary (smooth extension)
-- "fixed": Use fixed fraction of target delta (extension)}
+\itemize{
+\item "zero": Set to 1.0 (no shift, \strong{paper's canonical definition})
+\item "proportional": Scale proportionally to distance from boundary (smooth extension)
+\item "fixed": Use fixed fraction of target delta (extension)
+}}
 
 \item{inactive_fraction}{Numeric, fraction of target delta for inactive treatments
 (used with scaling_method = "fixed")}
@@ -43,22 +45,26 @@ Computes observation-specific delta_k(X) based on marginal propensities
 and active set membership. For the adaptive estimator with fixed epsilon.
 }
 \details{
-**Adaptive delta rationale:**
+\strong{Adaptive delta rationale:}
 
 The adaptive estimator uses fixed epsilon but adapts delta_k(X) based on
 propensity patterns. Intuition:
-- Active treatments (m_k(X) ∈ [ε, 1-ε]): Use target delta
-- Inactive treatments (m_k(X) < ε or > 1-ε): Set to 1.0 (paper) or scale (extensions)
+\itemize{
+\item Active treatments (\verb{m_k(X) ∈ [ε, 1-ε]}): Use target delta
+\item Inactive treatments (m_k(X) < ε or > 1-ε): Set to 1.0 (paper) or scale (extensions)
+}
 
 This satisfies the localized margin condition while allowing flexible
 constraints per observation.
 
-**Scaling methods:**
-- **zero**: δ_k(X) = 1.0 for inactive treatments (**paper's definition**)
-  Binary active/inactive: δ_k for active, 1.0 (no shift) for inactive
-- **proportional**: δ_k(X) = δ_target * min(m_k / ε, (1-m_k) / ε, 1)
-  Smoothly scales delta based on distance from boundary (extension)
-- **fixed**: δ_k(X) = δ_target * inactive_fraction for inactive treatments
-  Simple scaling by fixed fraction (extension)
+\strong{Scaling methods:}
+\itemize{
+\item \strong{zero}: δ_k(X) = 1.0 for inactive treatments (\strong{paper's definition})
+Binary active/inactive: δ_k for active, 1.0 (no shift) for inactive
+\item \strong{proportional}: δ_k(X) = δ_target * min(m_k / ε, (1-m_k) / ε, 1)
+Smoothly scales delta based on distance from boundary (extension)
+\item \strong{fixed}: δ_k(X) = δ_target * inactive_fraction for inactive treatments
+Simple scaling by fixed fraction (extension)
+}
 }
 \keyword{internal}

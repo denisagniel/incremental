@@ -2,9 +2,7 @@
 % Please edit documentation in R/nuisance_cache.R
 \name{nuisance_cache}
 \alias{nuisance_cache}
-\title{============================================================
-Nuisance-model-fit caching for stratified estimation
-============================================================}
+\title{============================================================Nuisance-model-fit caching for stratified estimation}
 \description{
 The eligibility-stratified pipeline
 (\code{\link{estimate_qdelta_mean_stratified}}) is called once per
@@ -29,10 +27,10 @@ memory discipline is preserved.
 The cache is a classed \strong{environment}, deliberately. Two properties
 follow and both are load-bearing:
 \itemize{
-  \item Partial fills survive an error. Per-pattern estimation is wrapped in
-    \code{tryCatch} by \code{estimate_pattern_effect()}; with value semantics
-    a pattern that failed after its propensity fit would discard that fit.
-  \item Large matrices are not copied when an entry is added.
+\item Partial fills survive an error. Per-pattern estimation is wrapped in
+\code{tryCatch} by \code{estimate_pattern_effect()}; with value semantics
+a pattern that failed after its propensity fit would discard that fit.
+\item Large matrices are not copied when an entry is added.
 }
 }
 

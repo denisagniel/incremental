@@ -33,9 +33,9 @@ Numeric scalar
 Single-cell accessor for \eqn{\partial E_Q[A_i] / \partial \lambda_j}, kept for
 diagnostic use and API stability. The Newton loop does NOT call this: it
 assembles the whole Jacobian at once via
-`compute_jacobian_analytical_internal()`, since computing all \eqn{(m+1)^2}
+\code{compute_jacobian_analytical_internal()}, since computing all \eqn{(m+1)^2}
 entries cell-by-cell re-evaluates the same \eqn{2^m} linear terms
 \eqn{(m+1)^2} times (the pre-2026-08-11 bottleneck). This entry equals
-`compute_moment_scatter_internal(...)[i + 1, j]`.
+\code{compute_moment_scatter_internal(...)[i + 1, j]}.
 }
 \keyword{internal}

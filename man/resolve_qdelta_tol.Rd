@@ -7,7 +7,7 @@
 resolve_qdelta_tol(qdelta_tol = NULL)
 }
 \arguments{
-\item{qdelta_tol}{Numeric scalar, or `NULL` for the package default `QDELTA_TOLERANCE`.}
+\item{qdelta_tol}{Numeric scalar, or \code{NULL} for the package default \code{QDELTA_TOLERANCE}.}
 }
 \value{
 Positive numeric scalar.

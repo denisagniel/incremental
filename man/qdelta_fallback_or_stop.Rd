@@ -19,16 +19,16 @@ qdelta_fallback_or_stop(i, e, ps_row, delta_i, n_fallback, n, max_failure_rate)
 
 \item{n}{Integer, observations in this fit.}
 
-\item{max_failure_rate}{Numeric in `[0, 1]`, from `max_qdelta_failure_rate`.}
+\item{max_failure_rate}{Numeric in \verb{[0, 1]}, from \code{max_qdelta_failure_rate}.}
 }
 \value{
-A `compute_qdelta_per_obs()`-shaped list (only when the failure is tolerated).
+A \code{compute_qdelta_per_obs()}-shaped list (only when the failure is tolerated).
 }
 \description{
-Called once per failure, with `n_fallback` already counting this failure. If the failures so far
-exceed `max_failure_rate * n` the run stops with a classed `qdelta_solver_failure` condition
+Called once per failure, with \code{n_fallback} already counting this failure. If the failures so far
+exceed \code{max_failure_rate * n} the run stops with a classed \code{qdelta_solver_failure} condition
 (the default rate of 0 stops at the first failure); otherwise returns the degenerate solution
 Q_delta = P0 (lambda = 0, the observation is left unshifted, a bias toward the null) marked
-`converged = FALSE`, after a warning.
+\code{converged = FALSE}, after a warning.
 }
 \keyword{internal}

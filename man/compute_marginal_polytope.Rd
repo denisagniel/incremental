@@ -14,7 +14,7 @@ combinations have positive probability under P_0}
 }
 \value{
 Matrix with m columns and k rows, where each row is a vertex
-  of the marginal polytope
+of the marginal polytope
 }
 \description{
 Enumerates the vertices of the marginal polytope M(supp(P_0)) for a given

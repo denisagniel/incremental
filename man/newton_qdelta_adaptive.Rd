@@ -25,8 +25,10 @@ newton_qdelta_adaptive(
 }
 \value{
 Same as newton_qdelta, plus:
-  - constraints_dropped_history: List tracking which constraints were dropped each iteration
-  - total_constraints_dropped: Total number of unique constraints dropped
+\itemize{
+\item constraints_dropped_history: List tracking which constraints were dropped each iteration
+\item total_constraints_dropped: Total number of unique constraints dropped
+}
 }
 \description{
 Adds adaptive constraint dropping to the Newton-Raphson solver.

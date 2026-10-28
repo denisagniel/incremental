@@ -20,11 +20,11 @@ validate_stratification_feasibility(
 \value{
 List containing:
 \describe{
-  \item{feasible}{Logical, whether stratification is feasible}
-  \item{reason}{Character, reason for infeasibility (or "Feasible" if feasible)}
-  \item{n_feasible_patterns}{Integer, number of patterns with n >= min_stratum_size}
-  \item{coverage}{Numeric, proportion of sample in feasible patterns}
-  \item{feasible_pattern_ids}{Integer vector, IDs of feasible patterns}
+\item{feasible}{Logical, whether stratification is feasible}
+\item{reason}{Character, reason for infeasibility (or "Feasible" if feasible)}
+\item{n_feasible_patterns}{Integer, number of patterns with n >= min_stratum_size}
+\item{coverage}{Numeric, proportion of sample in feasible patterns}
+\item{feasible_pattern_ids}{Integer vector, IDs of feasible patterns}
 }
 }
 \description{

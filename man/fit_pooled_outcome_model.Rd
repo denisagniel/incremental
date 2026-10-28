@@ -18,7 +18,7 @@ fit_pooled_outcome_model(
 }
 \description{
 Fits a single outcome regression on covariates and treatment indicators
-(treatments as features, not strata), then predicts E[Y | A = a, X] for every
+(treatments as features, not strata), then predicts \verb{E[Y | A = a, X]} for every
 treatment combination by setting the treatment columns to a. Used by
 \code{estimate_outcome_models} for the default \code{outcome_fit = "pooled"} to
 avoid the per-combination grand-mean fallback that starves at high m. Returns

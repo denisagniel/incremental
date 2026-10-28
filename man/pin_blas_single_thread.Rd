@@ -7,22 +7,22 @@
 pin_blas_single_thread()
 }
 \value{
-Invisibly, `TRUE` if the thread count was actually set, `FALSE` if
-  `RhpcBLASctl` was unavailable.
+Invisibly, \code{TRUE} if the thread count was actually set, \code{FALSE} if
+\code{RhpcBLASctl} was unavailable.
 }
 \description{
-The stage-1/stage-2 vectorization made BLAS (`crossprod`, `%*%`) the hot path
-inside every chunk. Combining `fork()` with a multithreaded BLAS
+The stage-1/stage-2 vectorization made BLAS (\code{crossprod}, \code{\%*\%}) the hot path
+inside every chunk. Combining \code{fork()} with a multithreaded BLAS
 (OpenBLAS/MKL/Accelerate) is a classic hang: the BLAS thread pool does not
 survive the fork, and a child that tries to use it can deadlock. Pinning each
-child to one BLAS thread avoids that, and also prevents `K` workers x `T` BLAS
+child to one BLAS thread avoids that, and also prevents \code{K} workers x \code{T} BLAS
 threads from oversubscribing the machine.
 
-`RhpcBLASctl` is the only reliable *runtime* control (env vars such as
-`OMP_NUM_THREADS` are read when the BLAS loads, i.e. at R startup, so setting
-them in a child is too late). It is therefore a `Suggests`, used when present.
+\code{RhpcBLASctl} is the only reliable \emph{runtime} control (env vars such as
+\code{OMP_NUM_THREADS} are read when the BLAS loads, i.e. at R startup, so setting
+them in a child is too late). It is therefore a \code{Suggests}, used when present.
 When absent this is a no-op: on a single-threaded reference BLAS -- what this
-package's own R build uses, `blas_get_num_procs()` == 1 -- there is nothing to
+package's own R build uses, \code{blas_get_num_procs()} == 1 -- there is nothing to
 pin and no hazard.
 }
 \keyword{internal}

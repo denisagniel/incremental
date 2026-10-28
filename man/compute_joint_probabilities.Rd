@@ -24,11 +24,11 @@ compute_joint_probabilities(
 
 \item{covariate_cols}{Character vector of covariate column names (required).}
 
-\item{treatment_cols}{Character vector, treatment columns in the column order of `vectors`
-(defaults to `treatment_order`; supply it when the two differ).}
+\item{treatment_cols}{Character vector, treatment columns in the column order of \code{vectors}
+(defaults to \code{treatment_order}; supply it when the two differ).}
 }
 \value{
-Matrix (n x 2^m) of propensity scores, columns in `treatment_cols` order
+Matrix (n x 2^m) of propensity scores, columns in \code{treatment_cols} order
 }
 \description{
 Computes P(A=a|X) for all 2^m combinations using sequential factorization:

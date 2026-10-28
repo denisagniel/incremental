@@ -22,7 +22,9 @@ Index of constraint to drop (1-indexed, excluding intercept)
 }
 \description{
 Uses several heuristics to identify the most problematic constraint:
-1. Smallest singular value contribution
-2. Row norm (constraints with very small norms are likely redundant)
-3. Linear dependence check
+\enumerate{
+\item Smallest singular value contribution
+\item Row norm (constraints with very small norms are likely redundant)
+\item Linear dependence check
+}
 }

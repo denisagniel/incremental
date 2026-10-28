@@ -26,14 +26,18 @@ zero probability are handled automatically.}
 odds ratios. E.g., delta = c(1.5, 2.0) increases P(A1=1) by 1.5x and P(A2=1) by 2x.}
 
 \item{divergence}{Character, divergence measure to minimize. Options:
-- "kl" (default): Kullback-Leibler D(Q||P), most stable, always convex
-- "reverse_kl": Reverse KL D(P||Q), can be unstable near boundary
-- "chi2": Chi-squared divergence, quadratic penalty
-- "hellinger": Hellinger distance, bounded divergence}
+\itemize{
+\item "kl" (default): Kullback-Leibler D(Q||P), most stable, always convex
+\item "reverse_kl": Reverse KL D(P||Q), can be unstable near boundary
+\item "chi2": Chi-squared divergence, quadratic penalty
+\item "hellinger": Hellinger distance, bounded divergence
+}}
 
 \item{fix_lambda0}{Logical, normalization approach:
-- FALSE (default): Internal normalization, solves (m+1) x (m+1) system, more stable
-- TRUE: External normalization, fixes lambda_0, solves m x m system}
+\itemize{
+\item FALSE (default): Internal normalization, solves (m+1) x (m+1) system, more stable
+\item TRUE: External normalization, fixes lambda_0, solves m x m system
+}}
 
 \item{tol}{Numeric, convergence tolerance for constraint norm. Default: 1e-8.
 Smaller values = tighter convergence but may require more iterations.}
@@ -51,62 +55,70 @@ adaptive_constraints = TRUE. Default: 2.}
 \item{verbose_adaptive}{Logical, print diagnostics when dropping constraints.
 Default: FALSE.}
 
-\item{combination_matrix}{Optional `2^m x m` matrix of all binary treatment
-combinations, as returned by [generate_binary_vectors()]. Depends only on
-`m`, so callers looping over many observations at a fixed `m` should compute
-it once and pass it in; `NULL` (default) computes it internally.}
+\item{combination_matrix}{Optional \verb{2^m x m} matrix of all binary treatment
+combinations, as returned by \code{\link[=generate_binary_vectors]{generate_binary_vectors()}}. Depends only on
+\code{m}, so callers looping over many observations at a fixed \code{m} should compute
+it once and pass it in; \code{NULL} (default) computes it internally.}
 }
 \value{
 List containing:
 \describe{
-  \item{q_delta}{Numeric vector (length 2^m), Q_delta weights summing to 1}
-  \item{lambda}{Numeric vector (length m+1 or m), fitted Lagrange multipliers}
-  \item{converged}{Logical, TRUE if converged within tolerance}
-  \item{constraint_norm}{Numeric, final ||constraint|| value}
-  \item{iterations}{Integer, number of Newton-Raphson iterations}
-  \item{delta}{Numeric vector, input delta (for reference)}
+\item{q_delta}{Numeric vector (length 2^m), Q_delta weights summing to 1}
+\item{lambda}{Numeric vector (length m+1 or m), fitted Lagrange multipliers}
+\item{converged}{Logical, TRUE if converged within tolerance}
+\item{constraint_norm}{Numeric, final ||constraint|| value}
+\item{iterations}{Integer, number of Newton-Raphson iterations}
+\item{delta}{Numeric vector, input delta (for reference)}
 }
 
 List containing:
 \describe{
-  \item{q_delta}{Numeric vector (length 2^m) of Q_delta probabilities for each treatment combination}
-  \item{lambda}{Numeric vector (length m+1 or m) of observation-specific lambda parameters}
-  \item{converged}{Logical, whether optimization converged within tolerance}
-  \item{constraint_norm}{Numeric, final constraint violation norm (should be < tol)}
-  \item{iterations}{Integer, number of Newton-Raphson iterations}
+\item{q_delta}{Numeric vector (length 2^m) of Q_delta probabilities for each treatment combination}
+\item{lambda}{Numeric vector (length m+1 or m) of observation-specific lambda parameters}
+\item{converged}{Logical, whether optimization converged within tolerance}
+\item{constraint_norm}{Numeric, final constraint violation norm (should be < tol)}
+\item{iterations}{Integer, number of Newton-Raphson iterations}
 }
 }
 \description{
 Computes the observation-specific Q_delta distribution q_delta(a|X_i) by solving
 a constrained optimization problem. Finds lambda parameters that tilt the
 propensity distribution p_0(a|X_i) to achieve target marginal probabilities
-E_Q[A_k] = E_P[A_k] + delta_k while minimizing a specified divergence.
+\code{E_Q[A_k] = E_P[A_k] + delta_k} while minimizing a specified divergence.
 }
 \details{
-**Optimization problem:**
-Solves: min_Q D(Q||P) subject to E_Q[A_k] = E_P[A_k] + delta_k for k=1,...,m
+\strong{Optimization problem:}
+Solves: min_Q D(Q||P) subject to \code{E_Q[A_k] = E_P[A_k] + delta_k} for k=1,...,m
 
 The solution has form: q(a) = p_0(a) * h(a; lambda) where h depends on divergence:
-- KL: h(a) = exp(lambda_0 + sum_k lambda_k * a_k)
-- Reverse KL: h(a) = -1 / (lambda_0 + sum_k lambda_k * a_k)
-- Chi2: h(a) = (lambda_0 + sum_k lambda_k * a_k) / 2 + 1
-- Hellinger: h(a) = 1 / (1 - lambda_0 - sum_k lambda_k * a_k)^2
+\itemize{
+\item KL: h(a) = exp(lambda_0 + sum_k lambda_k * a_k)
+\item Reverse KL: h(a) = -1 / (lambda_0 + sum_k lambda_k * a_k)
+\item Chi2: h(a) = (lambda_0 + sum_k lambda_k * a_k) / 2 + 1
+\item Hellinger: h(a) = 1 / (1 - lambda_0 - sum_k lambda_k * a_k)^2
+}
 
-**Algorithm:**
-1. Initialize lambda (divergence-specific starting values)
-2. Newton-Raphson: lambda <- lambda - J^{-1} * g where g is constraint vector
-3. Uses analytical Jacobians for speed (falls back to numerical if needed)
-4. Convergence when ||g|| < tol or max iterations reached
+\strong{Algorithm:}
+\enumerate{
+\item Initialize lambda (divergence-specific starting values)
+\item Newton-Raphson: \code{lambda <- lambda - J^{-1} * g} where g is constraint vector
+\item Uses analytical Jacobians for speed (falls back to numerical if needed)
+\item Convergence when ||g|| < tol or max iterations reached
+}
 
-**Convergence diagnostics:**
-- converged: TRUE if ||constraints|| < tol
-- iterations: Number of Newton steps taken
-- constraint_norm: Final ||E_Q[A] - target|| norm
+\strong{Convergence diagnostics:}
+\itemize{
+\item converged: TRUE if ||constraints|| < tol
+\item iterations: Number of Newton steps taken
+\item constraint_norm: Final \verb{||E_Q[A] - target||} norm
+}
 
-**Special cases handled:**
-- Zero propensities: Removes zero-probability combinations, works on active support
-- Singular Jacobians: Uses regularization or adaptive constraint dropping
-- Domain violations: Safeguards prevent h(a) from leaving valid domain
+\strong{Special cases handled:}
+\itemize{
+\item Zero propensities: Removes zero-probability combinations, works on active support
+\item Singular Jacobians: Uses regularization or adaptive constraint dropping
+\item Domain violations: Safeguards prevent h(a) from leaving valid domain
+}
 }
 \examples{
 \dontrun{

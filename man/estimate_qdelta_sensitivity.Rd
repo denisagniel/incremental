@@ -26,7 +26,7 @@ estimate_qdelta_sensitivity(
 
 \item{delta_grid}{Numeric vector or list of delta values to test
 Can be: (1) Vector of scalars (uniform delta), or
-        (2) List of vectors (non-uniform deltas)}
+(2) List of vectors (non-uniform deltas)}
 
 \item{treatment_cols}{Character vector of treatment column names (required).}
 
@@ -56,11 +56,13 @@ If NULL, will estimate using outcome_method}
 }
 \value{
 List containing:
-  - results: List of estimation results for each delta
-  - summary: Data frame with estimates, SEs, CIs for all deltas
-  - ps_est: Propensity score estimates (reusable)
-  - outcome_est: Outcome model estimates (reusable)
-  - runtime: Timing information
+\itemize{
+\item results: List of estimation results for each delta
+\item summary: Data frame with estimates, SEs, CIs for all deltas
+\item ps_est: Propensity score estimates (reusable)
+\item outcome_est: Outcome model estimates (reusable)
+\item runtime: Timing information
+}
 }
 \description{
 Functions for efficient sensitivity analysis over multiple delta values
@@ -75,15 +77,19 @@ This function dramatically reduces computation time for sensitivity analysis
 by avoiding repeated nuisance estimation:
 
 Standard approach (N deltas):
-  - Estimate PS: 2 hours × N = 2N hours
-  - Estimate outcome: 1 hour × N = N hours
-  - Total: 3N hours
+\itemize{
+\item Estimate PS: 2 hours × N = 2N hours
+\item Estimate outcome: 1 hour × N = N hours
+\item Total: 3N hours
+}
 
 Efficient approach (this function):
-  - Estimate PS: 2 hours × 1 = 2 hours
-  - Estimate outcome: 1 hour × 1 = 1 hour
-  - Compute Q_delta: 5 min × N = 5N/60 hours
-  - Total: ~3 hours (regardless of N)
+\itemize{
+\item Estimate PS: 2 hours × 1 = 2 hours
+\item Estimate outcome: 1 hour × 1 = 1 hour
+\item Compute Q_delta: 5 min × N = 5N/60 hours
+\item Total: ~3 hours (regardless of N)
+}
 }
 \examples{
 \dontrun{

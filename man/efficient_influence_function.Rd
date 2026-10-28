@@ -44,7 +44,7 @@ P(A=a|X) for all 2^m treatment combinations. Rows must sum to 1.}
 values required. Represents odds ratios for marginal treatment probabilities.}
 
 \item{outcome_means}{Numeric matrix (n x 2^m) of conditional outcome means
-E[Y|A=a,X] for all treatment combinations. Required for EIF-based estimation.}
+\verb{E[Y|A=a,X]} for all treatment combinations. Required for EIF-based estimation.}
 
 \item{divergence}{Character, divergence measure for Q_delta optimization.
 Options: "kl" (default, most stable), "reverse_kl", "chi2", "hellinger".}
@@ -63,30 +63,30 @@ budget, divided across parallel workers. Ignored when n <= 10,000.}
 
 \item{n_cores}{Integer, number of parallel workers for the large-n chunked path,
 parallelizing over OBSERVATION chunks (never over delta scenarios or
-coalitions). NULL (default) resolves via `getOption("incremental.n_cores")`
-and then `parallel::detectCores() - 1`; pass 1 to force sequential execution.
-Always sequential on Windows, where `parallel::mclapply()` cannot fork.
+coalitions). NULL (default) resolves via \code{getOption("incremental.n_cores")}
+and then \code{parallel::detectCores() - 1}; pass 1 to force sequential execution.
+Always sequential on Windows, where \code{parallel::mclapply()} cannot fork.
 Ignored when n <= 10,000. Parallelism re-orders independent chunk work only
 and does not change any numeric result.}
 
 \item{return_qdelta_results}{Logical, include the full per-observation Q_delta
-results (`qdelta_results`) in the output. TRUE (default) preserves the
+results (\code{qdelta_results}) in the output. TRUE (default) preserves the
 historical return contract. On the large-n chunked path, returning these
-`2^m`-length vectors from every forked worker is what limits the parallel
+\code{2^m}-length vectors from every forked worker is what limits the parallel
 speedup (measured 0.73x with them vs 4.70x without, at m = 11 / K = 9);
-pass FALSE if the caller does not need them. `convergence_info` and
-`convergence_summary` stay fully populated either way. Ignored when
+pass FALSE if the caller does not need them. \code{convergence_info} and
+\code{convergence_summary} stay fully populated either way. Ignored when
 n <= 10,000.}
 }
 \value{
 List containing:
 \describe{
-  \item{eif_values}{Numeric vector (length n) of EIF values}
-  \item{centered_eif}{Numeric vector (length n) of centered EIF values}
-  \item{plugin}{Numeric vector (length n) of plugin estimates}
-  \item{qdelta_results}{List of per-observation Q_delta solver results}
-  \item{convergence_info}{List with converged, iterations, constraint_norms vectors}
-  \item{convergence_summary}{List with n_converged, convergence_rate, mean_iterations, etc.}
+\item{eif_values}{Numeric vector (length n) of EIF values}
+\item{centered_eif}{Numeric vector (length n) of centered EIF values}
+\item{plugin}{Numeric vector (length n) of plugin estimates}
+\item{qdelta_results}{List of per-observation Q_delta solver results}
+\item{convergence_info}{List with converged, iterations, constraint_norms vectors}
+\item{convergence_summary}{List with n_converged, convergence_rate, mean_iterations, etc.}
 }
 }
 \description{
@@ -94,34 +94,38 @@ Computes the efficient influence function (EIF) for vector incremental treatment
 effects, combining outcome-regression and inverse-probability-weighting
 components into the one-step estimator analyzed in the paper. The EIF provides
 the basis for asymptotically efficient estimation and valid inference via the
-central limit theorem: sqrt(n) * (psi_hat - psi) -> N(0, E[EIF^2]).
+central limit theorem: sqrt(n) * (psi_hat - psi) -> \code{N(0, E[EIF^2])}.
 
 For large datasets (n > 10,000), automatically uses memory-efficient chunked
 computation to avoid memory issues.
 }
 \details{
-**EIF Structure:**
+\strong{EIF Structure:}
 The EIF has three components (see paper for full derivation):
 \enumerate{
-  \item \strong{Outcome regression:} E_Q[Y - mu(A,X)] - corrects for outcome model misspecification
-  \item \strong{Propensity score:} sum_a [I(A=a) - p(a|X)] * h(a, lambda) * mu(a,X) - corrects for propensity misspecification
-  \item \strong{Lambda derivative:} -sum_a mu(a,X) * p(a|X) * h'(a, lambda) * EIF_lambda(a) - accounts for Q_delta estimation
+\item \strong{Outcome regression:} \code{E_Q[Y - mu(A,X)]} - corrects for outcome model misspecification
+\item \strong{Propensity score:} \code{sum_a [I(A=a) - p(a|X)] * h(a, lambda) * mu(a,X)} - corrects for propensity misspecification
+\item \strong{Lambda derivative:} -sum_a mu(a,X) * p(a|X) * h'(a, lambda) * EIF_lambda(a) - accounts for Q_delta estimation
 }
 
-**Double robustness:** The estimator is consistent if EITHER the outcome models
+\strong{Double robustness:} The estimator is consistent if EITHER the outcome models
 OR the propensity score models are correctly specified (but not necessarily both).
 
-**Computation details:**
-- If qdelta_results not provided, uses Newton-Raphson to solve m+1 constraints per observation
-- Convergence diagnostics returned: converged flags, iteration counts, constraint norms
-- Warnings issued if convergence rate < 0.95 or if EIF variance is degenerate
-- Input validation checks: propensity sum-to-1, non-finite values, feasibility
-- For large n (> 10,000), automatically uses chunked computation to reduce memory usage
+\strong{Computation details:}
+\itemize{
+\item If qdelta_results not provided, uses Newton-Raphson to solve m+1 constraints per observation
+\item Convergence diagnostics returned: converged flags, iteration counts, constraint norms
+\item Warnings issued if convergence rate < 0.95 or if EIF variance is degenerate
+\item Input validation checks: propensity sum-to-1, non-finite values, feasibility
+\item For large n (> 10,000), automatically uses chunked computation to reduce memory usage
+}
 
-**Performance tips:**
-- Pre-compute qdelta_results when calling repeatedly with same delta
-- Use feasibility_check = FALSE unless delta feasibility is uncertain
-- For very large datasets, chunked computation is automatic and transparent
+\strong{Performance tips:}
+\itemize{
+\item Pre-compute qdelta_results when calling repeatedly with same delta
+\item Use feasibility_check = FALSE unless delta feasibility is uncertain
+\item For very large datasets, chunked computation is automatic and transparent
+}
 }
 \examples{
 \dontrun{

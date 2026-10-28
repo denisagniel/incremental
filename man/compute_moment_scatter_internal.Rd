@@ -11,7 +11,7 @@ compute_moment_scatter_internal(lambda, p0_active, b_ext_active, divergence)
 
 \item{p0_active}{Numeric vector, active propensity scores}
 
-\item{b_ext_active}{Matrix, extended design `cbind(1, vectors_active)`}
+\item{b_ext_active}{Matrix, extended design \code{cbind(1, vectors_active)}}
 
 \item{divergence}{Character, divergence type}
 }
@@ -22,7 +22,7 @@ Symmetric (m+1) x (m+1) numeric matrix
 Computes \eqn{S_2 = B_{ext}^\top \mathrm{diag}(p_0 \odot h'(u)) B_{ext}} with
 \eqn{u = B_{ext}\lambda}, the single \eqn{(m+1) \times (m+1)} object from which
 every Jacobian entry is read off (see the "Matrix form" section in this file's
-header for the derivation). `divergence_h_pair()` is called ONCE on the full
+header for the derivation). \code{divergence_h_pair()} is called ONCE on the full
 length-\eqn{n_a} linear-term vector, replacing the pre-2026-08-11 pattern of
 one scalar call per \eqn{(i, j, k)} triple.
 }

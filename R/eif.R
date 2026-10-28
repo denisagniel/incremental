@@ -630,7 +630,7 @@ efficient_influence_function_chunked <- function(X = NULL, A, Y = NULL, R = NULL
 #' effects, combining outcome-regression and inverse-probability-weighting
 #' components into the one-step estimator analyzed in the paper. The EIF provides
 #' the basis for asymptotically efficient estimation and valid inference via the
-#' central limit theorem: sqrt(n) * (psi_hat - psi) -> N(0, E[EIF^2]).
+#' central limit theorem: sqrt(n) * (psi_hat - psi) -> `N(0, E[EIF^2])`.
 #'
 #' For large datasets (n > 10,000), automatically uses memory-efficient chunked
 #' computation to avoid memory issues.
@@ -650,7 +650,7 @@ efficient_influence_function_chunked <- function(X = NULL, A, Y = NULL, R = NULL
 #' @param delta Numeric vector (length m) of target marginal changes. Positive
 #'   values required. Represents odds ratios for marginal treatment probabilities.
 #' @param outcome_means Numeric matrix (n x 2^m) of conditional outcome means
-#'   E[Y|A=a,X] for all treatment combinations. Required for EIF-based estimation.
+#'   `E[Y|A=a,X]` for all treatment combinations. Required for EIF-based estimation.
 #' @param divergence Character, divergence measure for Q_delta optimization.
 #'   Options: "kl" (default, most stable), "reverse_kl", "chi2", "hellinger".
 #' @param qdelta_results List (length n) of pre-computed Q_delta solver results.
@@ -682,8 +682,8 @@ efficient_influence_function_chunked <- function(X = NULL, A, Y = NULL, R = NULL
 #' **EIF Structure:**
 #' The EIF has three components (see paper for full derivation):
 #' \enumerate{
-#'   \item \strong{Outcome regression:} E_Q[Y - mu(A,X)] - corrects for outcome model misspecification
-#'   \item \strong{Propensity score:} sum_a [I(A=a) - p(a|X)] * h(a, lambda) * mu(a,X) - corrects for propensity misspecification
+#'   \item \strong{Outcome regression:} `E_Q[Y - mu(A,X)]` - corrects for outcome model misspecification
+#'   \item \strong{Propensity score:} `sum_a [I(A=a) - p(a|X)] * h(a, lambda) * mu(a,X)` - corrects for propensity misspecification
 #'   \item \strong{Lambda derivative:} -sum_a mu(a,X) * p(a|X) * h'(a, lambda) * EIF_lambda(a) - accounts for Q_delta estimation
 #' }
 #'
@@ -1290,7 +1290,7 @@ calculate_eif_lambda <- function(A, propensity_scores, qdelta_result, h_values, 
 #' Computes the observation-specific Q_delta distribution q_delta(a|X_i) by solving
 #' a constrained optimization problem. Finds lambda parameters that tilt the
 #' propensity distribution p_0(a|X_i) to achieve target marginal probabilities
-#' E_Q[A_k] = E_P[A_k] + delta_k while minimizing a specified divergence.
+#' `E_Q[A_k] = E_P[A_k] + delta_k` while minimizing a specified divergence.
 #'
 #' @param propensity_scores_i Numeric vector (length 2^m) of propensity scores
 #'   P(A=a|X_i) for all treatment combinations. Must sum to 1. Combinations with
@@ -1323,7 +1323,7 @@ calculate_eif_lambda <- function(A, propensity_scores, qdelta_result, h_values, 
 #'
 #' @details
 #' **Optimization problem:**
-#' Solves: min_Q D(Q||P) subject to E_Q[A_k] = E_P[A_k] + delta_k for k=1,...,m
+#' Solves: min_Q D(Q||P) subject to `E_Q[A_k] = E_P[A_k] + delta_k` for k=1,...,m
 #'
 #' The solution has form: q(a) = p_0(a) * h(a; lambda) where h depends on divergence:
 #' - KL: h(a) = exp(lambda_0 + sum_k lambda_k * a_k)
@@ -1333,14 +1333,14 @@ calculate_eif_lambda <- function(A, propensity_scores, qdelta_result, h_values, 
 #'
 #' **Algorithm:**
 #' 1. Initialize lambda (divergence-specific starting values)
-#' 2. Newton-Raphson: lambda <- lambda - J^{-1} * g where g is constraint vector
+#' 2. Newton-Raphson: `lambda <- lambda - J^{-1} * g` where g is constraint vector
 #' 3. Uses analytical Jacobians for speed (falls back to numerical if needed)
 #' 4. Convergence when ||g|| < tol or max iterations reached
 #'
 #' **Convergence diagnostics:**
 #' - converged: TRUE if ||constraints|| < tol
 #' - iterations: Number of Newton steps taken
-#' - constraint_norm: Final ||E_Q[A] - target|| norm
+#' - constraint_norm: Final `||E_Q[A] - target||` norm
 #'
 #' **Special cases handled:**
 #' - Zero propensities: Removes zero-probability combinations, works on active support

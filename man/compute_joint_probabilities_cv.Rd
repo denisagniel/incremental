@@ -27,10 +27,10 @@ compute_joint_probabilities_cv(
 
 \item{covariate_cols}{Character vector of covariate column names (required).}
 
-\item{treatment_cols}{Character vector, treatment columns in the column order of `vectors`.}
+\item{treatment_cols}{Character vector, treatment columns in the column order of \code{vectors}.}
 }
 \value{
-Matrix (n x 2^m) of propensity scores, columns in `treatment_cols` order
+Matrix (n x 2^m) of propensity scores, columns in \code{treatment_cols} order
 }
 \description{
 Efficient implementation: For each fold and model, caches predictions under

@@ -8,10 +8,10 @@ compute_active_sets(marginal_probs, epsilon, min_active = 1)
 }
 \arguments{
 \item{marginal_probs}{Numeric matrix of size n x m. Marginal propensity scores.
-Element [i,k] is P(A_k = 1 | X_i).}
+Element \verb{[i,k]} is P(A_k = 1 | X_i).}
 
 \item{epsilon}{Numeric. Threshold defining active set (scalar or vector length n).
-Treatments with marginal probabilities in [ε, 1-ε] are considered active.}
+Treatments with marginal probabilities in \verb{[ε, 1-ε]} are considered active.}
 
 \item{min_active}{Integer. Minimum number of active treatments required per observation
 (default = 1). Observations with fewer active treatments will have all treatments
@@ -19,29 +19,31 @@ marked as inactive (active_matrix will be all FALSE for that row).}
 }
 \value{
 List with components:
-  \item{active_matrix}{Logical matrix (n x m). TRUE if treatment k is active for obs i.}
-  \item{n_active}{Integer vector (length n). Number of active treatments per observation.}
-  \item{epsilon}{Numeric. The threshold used (scalar or vector).}
-  \item{sufficient_active}{Logical vector (length n). TRUE if observation has ≥ min_active
-    active treatments.}
-  \item{active_indices}{List of length n. Element i contains integer vector of active
-    treatment indices for observation i.}
+\item{active_matrix}{Logical matrix (n x m). TRUE if treatment k is active for obs i.}
+\item{n_active}{Integer vector (length n). Number of active treatments per observation.}
+\item{epsilon}{Numeric. The threshold used (scalar or vector).}
+\item{sufficient_active}{Logical vector (length n). TRUE if observation has ≥ min_active
+active treatments.}
+\item{active_indices}{List of length n. Element i contains integer vector of active
+treatment indices for observation i.}
 }
 \description{
 Identifies which treatments are "active" (have propensities away from boundaries)
-for each observation. A treatment k is active if m_k(X) ∈ [ε, 1-ε].
+for each observation. A treatment k is active if \verb{m_k(X) ∈ [ε, 1-ε]}.
 }
 \details{
-**Active set definition:**
-  K_ε(X_i) = {k : m_k(X_i) ∈ [ε, 1-ε]}
+\strong{Active set definition:}
+\verb{K_ε(X_i) = \{k : m_k(X_i) ∈ [ε, 1-ε]\}}
 
 Treatments near the boundary (m_k close to 0 or 1) are excluded because:
-- Nearly deterministic treatments provide little information
-- Constraint Jacobian Ω may become singular
-- Requires stronger overlap assumptions
+\itemize{
+\item Nearly deterministic treatments provide little information
+\item Constraint Jacobian Ω may become singular
+\item Requires stronger overlap assumptions
+}
 
-**Handling insufficient active treatments:**
-If an observation has fewer than `min_active` active treatments, we mark
+\strong{Handling insufficient active treatments:}
+If an observation has fewer than \code{min_active} active treatments, we mark
 all treatments as inactive for that observation. This allows calling code
 to handle such observations specially (e.g., use P_0 distribution, warn user).
 }

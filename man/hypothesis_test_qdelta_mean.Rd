@@ -22,10 +22,12 @@ hypothesis_test_qdelta_mean(
 }
 \value{
 List containing:
-  - test_statistic: z-statistic
-  - p_value: p-value
-  - null_value: null hypothesis value
-  - alternative: alternative hypothesis
+\itemize{
+\item test_statistic: z-statistic
+\item p_value: p-value
+\item null_value: null hypothesis value
+\item alternative: alternative hypothesis
+}
 }
 \description{
 Performs hypothesis tests for the counterfactual mean parameter,

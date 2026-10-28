@@ -2,7 +2,7 @@
 % Please edit documentation in R/estimation.R
 \name{compute_psi_delta}
 \alias{compute_psi_delta}
-\title{Compute plugin estimate of E[Y^{Q_delta}]}
+\title{Compute plugin estimate of \code{E[Y^{Q_delta}]}}
 \usage{
 compute_psi_delta(
   data,
@@ -36,7 +36,7 @@ and outcome (Y) columns}
 Each element from compute_qdelta_per_obs() containing q_delta, lambda, converged.
 If NULL, will compute automatically (slower).}
 
-\item{outcome_means}{Numeric matrix (n x 2^m), estimated E[Y|A=a,X] for each
+\item{outcome_means}{Numeric matrix (n x 2^m), estimated \verb{E[Y|A=a,X]} for each
 observation and treatment combination. Rows are observations, columns are
 treatment combinations in binary order.}
 
@@ -50,10 +50,12 @@ Optional if m is provided. Generated automatically if NULL.}
 Defaults to length(treatment_cols).}
 
 \item{method}{Character, estimation approach:
-- "outcome_regression": E_n[sum_a mu(a,X) * p_0(a|X) * h(a, lambda)]
-- "ipw": E_n[Y * I(A=a) * h(a, lambda)]
-- "doubly_robust": Uses the full EIF (recommended; the name is kept for
-  backward compatibility but is a misnomer -- see Details)}
+\itemize{
+\item "outcome_regression": \verb{E_n[sum_a mu(a,X) * p_0(a|X) * h(a, lambda)]}
+\item "ipw": \code{E_n[Y * I(A=a) * h(a, lambda)]}
+\item "doubly_robust": Uses the full EIF (recommended; the name is kept for
+backward compatibility but is a misnomer -- see Details)
+}}
 
 \item{divergence}{Character, divergence type ("kl", "reverse_kl", "chi2", "hellinger")}
 
@@ -61,11 +63,11 @@ Defaults to length(treatment_cols).}
 "vector" (returns observation-level contributions)}
 }
 \value{
-If return = "mean": Numeric scalar, estimated E[Y^{Q_delta}].
-  If return = "vector": Numeric vector (length n) of observation-level contributions.
+If return = "mean": Numeric scalar, estimated \code{E[Y^{Q_delta}]}.
+If return = "vector": Numeric vector (length n) of observation-level contributions.
 }
 \description{
-Calculates the causal estimand E[Y^{Q_delta}] using the identification
+Calculates the causal estimand \code{E[Y^{Q_delta}]} using the identification
 results from the paper. Implements three estimation approaches: outcome
 regression, inverse probability weighting (IPW), and the efficient-influence-
 function-based estimator (named "doubly_robust" for backward compatibility;
@@ -75,21 +77,23 @@ be used directly for custom workflows.
 }
 \details{
 The three methods have different robustness properties:
-- **outcome_regression**: Consistent if outcome models correct, ignores propensity misspecification
-- **ipw**: Consistent if propensity models correct, ignores outcome misspecification
-- **doubly_robust** (recommended): Uses the full EIF. Requires **both** nuisances
-  to be consistent, but nuisance error enters only through a second-order
-  product-rate remainder
-  \code{R_n = max_a||pihat_a - pi_a||_2 * max_a||muhat_a - mu_a||_2 + max_a||pihat_a - pi_a||_2^2},
-  so a slowly-converging outcome model is tolerated when the propensity model
-  converges quickly. The method name is retained for backward compatibility
-  and is a misnomer: this estimator is **not** doubly robust. It is not
-  consistent when the propensity model is inconsistent but the outcome model
-  is correct, because the estimand depends on the propensity score through
-  the divergence tilt and not only through inverse-probability weighting.
-  Note also that the squared term requires
-  \code{||pihat_a - pi_a||_2 = o_p(n^(-1/4))} even when the outcome model is
-  exactly correct. See Theorem 1 of the accompanying paper.
+\itemize{
+\item \strong{outcome_regression}: Consistent if outcome models correct, ignores propensity misspecification
+\item \strong{ipw}: Consistent if propensity models correct, ignores outcome misspecification
+\item \strong{doubly_robust} (recommended): Uses the full EIF. Requires \strong{both} nuisances
+to be consistent, but nuisance error enters only through a second-order
+product-rate remainder
+\code{R_n = max_a||pihat_a - pi_a||_2 * max_a||muhat_a - mu_a||_2 + max_a||pihat_a - pi_a||_2^2},
+so a slowly-converging outcome model is tolerated when the propensity model
+converges quickly. The method name is retained for backward compatibility
+and is a misnomer: this estimator is \strong{not} doubly robust. It is not
+consistent when the propensity model is inconsistent but the outcome model
+is correct, because the estimand depends on the propensity score through
+the divergence tilt and not only through inverse-probability weighting.
+Note also that the squared term requires
+\code{||pihat_a - pi_a||_2 = o_p(n^(-1/4))} even when the outcome model is
+exactly correct. See Theorem 1 of the accompanying paper.
+}
 
 For the "doubly_robust" method, the function uses the full EIF formula with
 Omega matrix correction, which is the estimator analyzed in the paper.

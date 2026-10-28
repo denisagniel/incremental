@@ -17,7 +17,7 @@ compute_h_function_value(a, lambda, divergence)
 Numeric, h(a, lambda) value for the specified divergence
 }
 \description{
-Main estimation functions for computing psi_delta = E[Y^{Q_delta}], the
+Main estimation functions for computing psi_delta = \code{E[Y^{Q_delta}]}, the
 counterfactual mean under incremental interventions. Implements outcome
 regression, IPW, and one-step (EIF-based) estimators with full inference.
 Also includes an experimental TMLE-style estimator with no supporting theory.
@@ -26,12 +26,12 @@ Computes the h(a, lambda) function for different divergence measures.
 This function is used in the tilting mechanism for Q_delta distributions.
 }
 \details{
-For a linear term z = lambda[1] + a' * lambda[2:(m+1)]:
+For a linear term \verb{z = lambda[1] + a' * lambda[2:(m+1)]}:
 \itemize{
-  \item KL divergence: h(z) = exp(z)
-  \item Reverse KL: h(z) = -1/z (with safeguarding for z < 0, see Table 1 in paper)
-  \item Chi-squared: h(z) = z/2 + 1
-  \item Hellinger: h(z) = 1/(1-z)^2 (with domain checks)
+\item KL divergence: h(z) = exp(z)
+\item Reverse KL: h(z) = -1/z (with safeguarding for z < 0, see Table 1 in paper)
+\item Chi-squared: h(z) = z/2 + 1
+\item Hellinger: h(z) = 1/(1-z)^2 (with domain checks)
 }
 
 Domain violations raise an error rather than saturating (unlike the hot

@@ -26,14 +26,16 @@ checking all observations when delta is clearly infeasible.}
 }
 \value{
 List containing:
-  - n_feasible: number of feasible observations
-  - n_total: total number of observations
-  - feasibility_rate: proportion of feasible observations
-  - infeasible_indices: indices of infeasible observations
-  - polytope_info: list of polytope information for each observation
-  - most_restrictive_obs: index of observation with tightest polytope
-  - early_stopped: logical flag indicating if early stopping was triggered (only present if TRUE)
-  - first_infeasible: index of first infeasible observation (only present if early_stopped=TRUE)
+\itemize{
+\item n_feasible: number of feasible observations
+\item n_total: total number of observations
+\item feasibility_rate: proportion of feasible observations
+\item infeasible_indices: indices of infeasible observations
+\item polytope_info: list of polytope information for each observation
+\item most_restrictive_obs: index of observation with tightest polytope
+\item early_stopped: logical flag indicating if early stopping was triggered (only present if TRUE)
+\item first_infeasible: index of first infeasible observation (only present if early_stopped=TRUE)
+}
 }
 \description{
 Checks feasibility of delta values for each observation and provides

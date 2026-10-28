@@ -42,11 +42,11 @@ newton_qdelta(
 
 \item{verbose_adaptive}{Print adaptive constraint diagnostics (default FALSE)}
 
-\item{combination_matrix}{Optional `2^m x m` matrix of all binary treatment
-combinations, as returned by [generate_binary_vectors()]. It depends only on
-`m`, which is fixed for the whole solve, so callers that solve many
-observations at one `m` (e.g. `efficient_influence_function()`) should
-compute it once and pass it here. `NULL` (default) computes it internally,
+\item{combination_matrix}{Optional \verb{2^m x m} matrix of all binary treatment
+combinations, as returned by \code{\link[=generate_binary_vectors]{generate_binary_vectors()}}. It depends only on
+\code{m}, which is fixed for the whole solve, so callers that solve many
+observations at one \code{m} (e.g. \code{efficient_influence_function()}) should
+compute it once and pass it here. \code{NULL} (default) computes it internally,
 preserving backward compatibility for direct callers.}
 }
 \value{
@@ -61,13 +61,13 @@ adaptive constraint dropping for singular systems.
 \section{Matrix form of the moment/Jacobian pass (read this before editing)}{
 
 
-The paper presents the constrained-tilt problem as a **sum over the \eqn{2^m}
-treatment atoms**; this file implements the same quantities as **matrix
-products**, and the two look nothing alike. The translation, once, so nobody
+The paper presents the constrained-tilt problem as a \strong{sum over the \eqn{2^m}
+treatment atoms}; this file implements the same quantities as \strong{matrix
+products}, and the two look nothing alike. The translation, once, so nobody
 has to re-derive it:
 
 Let \eqn{B} be the active slice of the \eqn{2^m \times m} combination matrix
-([generate_binary_vectors()]) and \eqn{B_{ext} = [\mathbf{1}, B]} its extended
+(\code{\link[=generate_binary_vectors]{generate_binary_vectors()}}) and \eqn{B_{ext} = [\mathbf{1}, B]} its extended
 \eqn{n_a \times (m+1)} form. Under internal normalization the tilted weights
 are \eqn{q_k = p_{0k}\, h(u_k)} with linear term
 \eqn{u_k = \lambda_0 + \sum_j a_{kj}\lambda_j}, i.e.
@@ -84,36 +84,36 @@ Differentiating, every Jacobian entry is a weighted second moment of
 
 where the row multiplier \eqn{r_i(k)} is \eqn{a_{ki} = B_{ext}[k, i+1]} for a
 marginal row \eqn{i \le m} and \eqn{1 = B_{ext}[k, 1]} for the normalization
-row \eqn{i = m+1}. So **the whole Jacobian is one symmetric scatter matrix
-with its rows permuted**:
+row \eqn{i = m+1}. So \strong{the whole Jacobian is one symmetric scatter matrix
+with its rows permuted}:
 
 \deqn{S_2 = B_{ext}^\top \,\mathrm{diag}(p_0 \odot h'(u))\, B_{ext},
       \qquad J = S_2[(2,\dots,m+1,1),\, \cdot\,].}
 
-That is `compute_moment_scatter_internal()` +
-`compute_jacobian_analytical_internal()`. The row permutation
-\eqn{(2,\dots,m+1,1)} is the *only* reason the code does not read as a plain
-`crossprod`: it maps the scatter matrix's "intercept-first" column order onto
+That is \code{compute_moment_scatter_internal()} +
+\code{compute_jacobian_analytical_internal()}. The row permutation
+\eqn{(2,\dots,m+1,1)} is the \emph{only} reason the code does not read as a plain
+\code{crossprod}: it maps the scatter matrix's "intercept-first" column order onto
 the residual vector's "marginals-first, normalization-last" row order used by
-`compute_constraint_vector_internal()`.
+\code{compute_constraint_vector_internal()}.
 
 Two consequences exploited here:
 \itemize{
-  \item \eqn{S_2} is the same object for the marginal rows and the
-    normalization row, so \eqn{h'} is evaluated **once per Newton iteration**
-    over the whole active vector -- not once per \eqn{(i,j,k)} triple. Before
-    2026-08-11 this file evaluated it \eqn{(m+1)^2} times per combination per
-    iteration (1.77M scalar [divergence_h_pair()] calls per observation at
-    m = 11), which profiling showed to be 99.8% of the solve. See
-    `explorations/investigations/profile_qdelta_solver_pre_rewrite.md`.
-  \item For `divergence = "chi2"`, \eqn{h'(x) \equiv 1/2} for all \eqn{x}, so
-    \eqn{S_2} does not depend on \eqn{\lambda} at all and is hoisted out of
-    the Newton loop entirely (computed once per solve).
+\item \eqn{S_2} is the same object for the marginal rows and the
+normalization row, so \eqn{h'} is evaluated \strong{once per Newton iteration}
+over the whole active vector -- not once per \eqn{(i,j,k)} triple. Before
+2026-08-11 this file evaluated it \eqn{(m+1)^2} times per combination per
+iteration (1.77M scalar \code{\link[=divergence_h_pair]{divergence_h_pair()}} calls per observation at
+m = 11), which profiling showed to be 99.8\% of the solve. See
+\code{explorations/investigations/profile_qdelta_solver_pre_rewrite.md}.
+\item For \code{divergence = "chi2"}, \eqn{h'(x) \equiv 1/2} for all \eqn{x}, so
+\eqn{S_2} does not depend on \eqn{\lambda} at all and is hoisted out of
+the Newton loop entirely (computed once per solve).
 }
 
 The pre-vectorization scalar-loop implementation is preserved verbatim in
-`R/fast_qdelta_solver_legacy.R` as a numerical-equivalence reference; see
-`tests/testthat/test-qdelta-vectorized-equivalence.R`.
+\code{R/fast_qdelta_solver_legacy.R} as a numerical-equivalence reference; see
+\code{tests/testthat/test-qdelta-vectorized-equivalence.R}.
 }
 
 \author{

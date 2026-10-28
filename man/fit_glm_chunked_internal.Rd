@@ -22,9 +22,11 @@ fit_glm_chunked_internal(
 }
 \value{
 List with class "chunked_glm" containing:
-  - coefficients: Numeric vector of fitted coefficients (length p+1)
-  - covariate_cols: Character vector of covariate names
-  - method: Character "chunked_glm"
+\itemize{
+\item coefficients: Numeric vector of fitted coefficients (length p+1)
+\item covariate_cols: Character vector of covariate names
+\item method: Character "chunked_glm"
+}
 }
 \description{
 Fits a binary logistic GLM by accumulating sufficient statistics (X'X and X'y)

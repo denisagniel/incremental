@@ -31,7 +31,7 @@ eif_chunk_worker(
 \item{qdelta_results}{Full-length list of pre-computed Q_delta results, or NULL
 to solve this chunk's observations inside the worker}
 
-\item{delta}{Numeric vector (length m), required when `qdelta_results` is NULL}
+\item{delta}{Numeric vector (length m), required when \code{qdelta_results} is NULL}
 
 \item{a_mat, a_extended_matrix}{Combination matrices, built once by the caller}
 
@@ -44,24 +44,26 @@ to solve this chunk's observations inside the worker}
 \item{pin_blas}{Logical, pin BLAS to one thread (TRUE inside forked workers)}
 
 \item{return_qdelta}{Logical, ship the full per-observation Q_delta results
-(each containing a `2^m` weight vector) back to the parent. Setting this FALSE
+(each containing a \code{2^m} weight vector) back to the parent. Setting this FALSE
 returns only the three scalar convergence fields per observation, which is
 dramatically cheaper across a fork pipe -- see the "Return payload dominates
-fork speedup" section of `efficient_influence_function_chunked()`.}
+fork speedup" section of \code{efficient_influence_function_chunked()}.}
 }
 \value{
-List with `eif_values`, `plugin`, `chunk_indices`, `qdelta_conv` (three
-  scalar vectors, present whenever this worker solved Q_delta), and
-  `qdelta_results` (the full list; present only when solved here AND
-  `return_qdelta` is TRUE, so already-known or unwanted results are never
-  serialized back from the worker)
+List with \code{eif_values}, \code{plugin}, \code{chunk_indices}, \code{qdelta_conv} (three
+scalar vectors, present whenever this worker solved Q_delta), and
+\code{qdelta_results} (the full list; present only when solved here AND
+\code{return_qdelta} is TRUE, so already-known or unwanted results are never
+serialized back from the worker)
 }
 \description{
 The unit dispatched to each parallel worker. It owns BOTH phases for its own
 observations:
-  1. the per-observation Q_delta Newton solves (~82% of per-observation cost at
-     m = 11 after stage 1), when `qdelta_results` was not supplied by the caller;
-  2. the vectorized EIF matrix assembly (~18%), via `eif_compute_chunk()`.
+\enumerate{
+\item the per-observation Q_delta Newton solves (~82\% of per-observation cost at
+m = 11 after stage 1), when \code{qdelta_results} was not supplied by the caller;
+\item the vectorized EIF matrix assembly (~18\%), via \code{eif_compute_chunk()}.
+}
 
 Both phases must live inside the worker for chunk parallelism to be worth
 anything: before this stage the Q_delta loop ran serially in the parent, which
@@ -69,7 +71,7 @@ by Amdahl's law capped any chunk-level speedup at ~1.19x regardless of core
 count (measured). Nothing about either phase's math is changed here -- this
 function only slices, dispatches and re-assembles.
 
-All matrices are sliced to the chunk INSIDE the worker. Under `fork()` the
+All matrices are sliced to the chunk INSIDE the worker. Under \code{fork()} the
 parent's full matrices are shared copy-on-write and only read, so each worker's
 resident footprint is its own chunk, not the whole cohort.
 }

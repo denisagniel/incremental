@@ -22,10 +22,12 @@ suggest_feasible_delta(
 }
 \value{
 List containing:
-  - suggested_delta: feasible delta values closest to requested
-  - feasibility_margin: minimum distance to polytope boundary
-  - n_obs_feasible: number of observations for which suggested delta is feasible
-  - optimization_info: details about the optimization process
+\itemize{
+\item suggested_delta: feasible delta values closest to requested
+\item feasibility_margin: minimum distance to polytope boundary
+\item n_obs_feasible: number of observations for which suggested delta is feasible
+\item optimization_info: details about the optimization process
+}
 }
 \description{
 Finds delta values that are feasible for all observations by solving

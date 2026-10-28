@@ -14,19 +14,19 @@ If provided, computes additional diagnostics about propensities.}
 }
 \value{
 List with components:
-  \item{n_obs}{Integer. Number of observations.}
-  \item{m_treatments}{Integer. Number of treatments.}
-  \item{epsilon}{Numeric. Threshold used.}
-  \item{n_active_summary}{Numeric vector. Summary statistics (min, Q1, median, Q3, max)
-    of number of active treatments per observation.}
-  \item{n_insufficient}{Integer. Number of observations with insufficient active treatments.}
-  \item{prop_insufficient}{Numeric. Proportion of observations with insufficient active.}
-  \item{active_by_treatment}{Integer vector (length m). Number of observations where
-    each treatment is active.}
-  \item{prop_active_by_treatment}{Numeric vector (length m). Proportion of observations
-    where each treatment is active.}
-  \item{min_propensity}{Numeric (length m, optional). Minimum marginal propensity per treatment.}
-  \item{max_propensity}{Numeric (length m, optional). Maximum marginal propensity per treatment.}
+\item{n_obs}{Integer. Number of observations.}
+\item{m_treatments}{Integer. Number of treatments.}
+\item{epsilon}{Numeric. Threshold used.}
+\item{n_active_summary}{Numeric vector. Summary statistics (min, Q1, median, Q3, max)
+of number of active treatments per observation.}
+\item{n_insufficient}{Integer. Number of observations with insufficient active treatments.}
+\item{prop_insufficient}{Numeric. Proportion of observations with insufficient active.}
+\item{active_by_treatment}{Integer vector (length m). Number of observations where
+each treatment is active.}
+\item{prop_active_by_treatment}{Numeric vector (length m). Proportion of observations
+where each treatment is active.}
+\item{min_propensity}{Numeric (length m, optional). Minimum marginal propensity per treatment.}
+\item{max_propensity}{Numeric (length m, optional). Maximum marginal propensity per treatment.}
 }
 \description{
 Provides descriptive statistics about active sets across observations.

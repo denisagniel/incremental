@@ -37,17 +37,21 @@ adaptive_solve(
 }
 \value{
 List with:
-  - lambda_update: Newton step Δλ = -J^{-1} F(λ)
-  - constraints_dropped: Indices of dropped constraints
-  - n_drops: Number of constraints dropped
-  - used_regularization: Whether regularization was applied
-  - condition_number: Final condition number
-  - converged: Whether a solution was found
+\itemize{
+\item lambda_update: Newton step \verb{Δλ = -J^\{-1\} F(λ)}
+\item constraints_dropped: Indices of dropped constraints
+\item n_drops: Number of constraints dropped
+\item used_regularization: Whether regularization was applied
+\item condition_number: Final condition number
+\item converged: Whether a solution was found
+}
 }
 \description{
 If the Jacobian is singular:
-1. First, drop truly redundant constraints (P(A_k=1) ∈ {0,1})
-2. If still singular, use regularization (Ω + ρI) instead of dropping active constraints
+\enumerate{
+\item First, drop truly redundant constraints (\verb{P(A_k=1) ∈ \{0,1\}})
+\item If still singular, use regularization (Ω + ρI) instead of dropping active constraints
+}
 }
 \details{
 This preserves the estimand while handling both redundant constraints and

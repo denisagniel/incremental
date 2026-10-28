@@ -1,17 +1,17 @@
 #' Compute Vanishing Threshold for Active Set Selection
 #'
-#' Computes the vanishing threshold ε_n = C * n^{-γ} for active set selection.
+#' Computes the vanishing threshold `ε_n = C * n^{-γ}` for active set selection.
 #' The threshold decreases with sample size at rate controlled by γ.
 #'
 #' @param n Integer. Sample size.
-#' @param gamma Numeric. Rate parameter controlling threshold decay (ε_n = O(n^{-γ})).
+#' @param gamma Numeric. Rate parameter controlling threshold decay (`ε_n = O(n^{-γ})`).
 #' @param constant Numeric. Multiplicative constant (default = 1). Controls base level.
 #'
 #' @return Numeric. The computed threshold ε_n.
 #'
 #' @details
 #' The vanishing threshold is used to define the active set:
-#'   K_ε(X) = {k : m_k(X) ∈ [ε_n, 1-ε_n]}
+#'   `K_ε(X) = {k : m_k(X) ∈ [ε_n, 1-ε_n]}`
 #'
 #' where m_k(X) = P(A_k = 1 | X) is the marginal propensity for treatment k.
 #'
@@ -60,12 +60,12 @@ compute_vanishing_threshold <- function(n, gamma, constant = 1) {
 #' Compute Active Sets Based on Marginal Propensities
 #'
 #' Identifies which treatments are "active" (have propensities away from boundaries)
-#' for each observation. A treatment k is active if m_k(X) ∈ [ε, 1-ε].
+#' for each observation. A treatment k is active if `m_k(X) ∈ [ε, 1-ε]`.
 #'
 #' @param marginal_probs Numeric matrix of size n x m. Marginal propensity scores.
-#'   Element [i,k] is P(A_k = 1 | X_i).
+#'   Element `[i,k]` is P(A_k = 1 | X_i).
 #' @param epsilon Numeric. Threshold defining active set (scalar or vector length n).
-#'   Treatments with marginal probabilities in [ε, 1-ε] are considered active.
+#'   Treatments with marginal probabilities in `[ε, 1-ε]` are considered active.
 #' @param min_active Integer. Minimum number of active treatments required per observation
 #'   (default = 1). Observations with fewer active treatments will have all treatments
 #'   marked as inactive (active_matrix will be all FALSE for that row).
@@ -81,7 +81,7 @@ compute_vanishing_threshold <- function(n, gamma, constant = 1) {
 #'
 #' @details
 #' **Active set definition:**
-#'   K_ε(X_i) = {k : m_k(X_i) ∈ [ε, 1-ε]}
+#'   `K_ε(X_i) = {k : m_k(X_i) ∈ [ε, 1-ε]}`
 #'
 #' Treatments near the boundary (m_k close to 0 or 1) are excluded because:
 #' - Nearly deterministic treatments provide little information

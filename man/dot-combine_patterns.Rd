@@ -2,7 +2,7 @@
 % Please edit documentation in R/estimation.R
 \name{.combine_patterns}
 \alias{.combine_patterns}
-\title{Aggregate stratified estimation results}
+\title{Combine per-pattern estimates into a stratified aggregate (core math)}
 \usage{
 .combine_patterns(
   estimates,
@@ -42,133 +42,26 @@ are the estimated pattern prevalences, so the between-pattern term is added.
 \item{coverage}{Numeric, share of the full sample in the included patterns.
 Defaults to \code{sum(prevalences)}; supply it explicitly when
 \code{prevalences} are custom weights.}
-
-\item{pattern_results}{List, results from estimate_pattern_effect() for each pattern}
-
-\item{patterns}{Data frame, pattern information from identify_eligibility_patterns()}
 }
 \value{
-List containing:
-\describe{
-  \item{estimate}{Numeric, aggregated estimate ψ = Σ p_k ψ_k}
-  \item{se}{Numeric, standard error from aggregated EIF}
-  \item{ci_lower}{Numeric, lower confidence bound}
-  \item{ci_upper}{Numeric, upper confidence bound}
-  \item{p_value}{Numeric, two-sided p-value for H0: ψ = 0}
-  \item{eif_values}{Numeric vector (length n), aggregated EIF}
-  \item{pattern_summaries}{Data frame with per-pattern estimates and weights}
-  \item{n_patterns_used}{Integer, number of patterns with successful estimation}
-  \item{coverage}{Numeric, proportion of sample in successfully estimated patterns}
-}
-
 List: estimate, se, ci_lower, ci_upper, p_value, eif_values (centered,
-  length n_full), weights (aligned with estimates), coverage (sum of included
-  prevalence).
+length n_full), weights (aligned with estimates), coverage (sum of included
+prevalence).
 }
 \description{
-Aggregates pattern-specific estimates via weighted averaging with delta
-method variance estimation. Uses aggregated EIF for variance.
+Single source of truth for the stratified aggregation, shared by
+\code{aggregate_stratified_results()} (used inside estimation) and
+\code{recombine_stratified_patterns()} (post-hoc, no re-estimation). Because
+eligibility patterns partition the sample (each observation belongs to exactly
+one pattern), the aggregate is a prevalence-weighted average of per-pattern
+estimates. With prevalence weights \eqn{w_k = n_k / n_S}, the pooled estimator
+is the plain mean of the observation-level influence values over the included
+patterns, so its influence function for observation \eqn{i} in pattern
+\eqn{k} is \eqn{(\varphi_i - \hat\psi_k)/c + (\hat\psi_k - \hat\psi)/c},
+where \eqn{c} is the included share of the sample. The first term is the
+within-pattern influence function rescaled by \eqn{w_k n / n_k} (it is NOT
+\eqn{w_k \varphi_i}); the second is the between-pattern term, present because
+pattern membership and hence the weights are random. For fixed user-supplied
+weights only the rescaled within-pattern term applies.
 }
-\keyword{(\hat\psi_k}
-\keyword{(core}
-\keyword{(each}
-\keyword{(it}
-\keyword{(post-hoc,}
-\keyword{(used}
-\keyword{+}
-\keyword{-}
-\keyword{/}
-\keyword{=}
-\keyword{Because}
-\keyword{Combine}
-\keyword{For}
-\keyword{NOT}
-\keyword{Single}
-\keyword{The}
-\keyword{With}
-\keyword{\code{aggregate_stratified_results()}}
-\keyword{\code{recombine_stratified_patterns()}}
-\keyword{\eqn{(\varphi_i}
-\keyword{\eqn{c}}
-\keyword{\eqn{i}}
-\keyword{\eqn{k}}
-\keyword{\eqn{w_k}
-\keyword{\hat\psi)/c},}
-\keyword{\hat\psi_k)/c}
-\keyword{\varphi_i});}
-\keyword{a}
-\keyword{aggregate}
-\keyword{aggregation,}
-\keyword{and}
-\keyword{applies.}
-\keyword{are}
-\keyword{average}
-\keyword{because}
-\keyword{belongs}
-\keyword{between-pattern}
-\keyword{by}
-\keyword{eligibility}
-\keyword{estimates}
-\keyword{estimates.}
-\keyword{estimation)}
-\keyword{estimator}
-\keyword{exactly}
-\keyword{first}
-\keyword{fixed}
-\keyword{for}
-\keyword{function}
-\keyword{hence}
-\keyword{in}
-\keyword{included}
-\keyword{influence}
-\keyword{inside}
 \keyword{internal}
-\keyword{into}
-\keyword{is}
-\keyword{its}
-\keyword{math)}
-\keyword{mean}
-\keyword{membership}
-\keyword{n}
-\keyword{n_S},}
-\keyword{n_k}
-\keyword{n_k}}
-\keyword{no}
-\keyword{observation}
-\keyword{observation-level}
-\keyword{of}
-\keyword{one}
-\keyword{only}
-\keyword{over}
-\keyword{partition}
-\keyword{pattern}
-\keyword{pattern),}
-\keyword{patterns}
-\keyword{patterns,}
-\keyword{per-pattern}
-\keyword{plain}
-\keyword{pooled}
-\keyword{present}
-\keyword{prevalence}
-\keyword{prevalence-weighted}
-\keyword{random.}
-\keyword{re-estimation).}
-\keyword{rescaled}
-\keyword{sample}
-\keyword{sample.}
-\keyword{second}
-\keyword{share}
-\keyword{shared}
-\keyword{so}
-\keyword{source}
-\keyword{stratified}
-\keyword{term}
-\keyword{term,}
-\keyword{the}
-\keyword{to}
-\keyword{truth}
-\keyword{user-supplied}
-\keyword{values}
-\keyword{weights}
-\keyword{where}
-\keyword{within-pattern}

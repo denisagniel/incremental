@@ -28,7 +28,7 @@
 #'
 #' The adaptive estimator uses fixed epsilon but adapts delta_k(X) based on
 #' propensity patterns. Intuition:
-#' - Active treatments (m_k(X) ∈ [ε, 1-ε]): Use target delta
+#' - Active treatments (`m_k(X) ∈ [ε, 1-ε]`): Use target delta
 #' - Inactive treatments (m_k(X) < ε or > 1-ε): Set to 1.0 (paper) or scale (extensions)
 #'
 #' This satisfies the localized margin condition while allowing flexible

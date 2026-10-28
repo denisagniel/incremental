@@ -9,7 +9,7 @@ compute_vanishing_threshold(n, gamma, constant = 1)
 \arguments{
 \item{n}{Integer. Sample size.}
 
-\item{gamma}{Numeric. Rate parameter controlling threshold decay (ε_n = O(n^{-γ})).}
+\item{gamma}{Numeric. Rate parameter controlling threshold decay (\code{ε_n = O(n^{-γ})}).}
 
 \item{constant}{Numeric. Multiplicative constant (default = 1). Controls base level.}
 }
@@ -17,22 +17,22 @@ compute_vanishing_threshold(n, gamma, constant = 1)
 Numeric. The computed threshold ε_n.
 }
 \description{
-Computes the vanishing threshold ε_n = C * n^{-γ} for active set selection.
+Computes the vanishing threshold \code{ε_n = C * n^{-γ}} for active set selection.
 The threshold decreases with sample size at rate controlled by γ.
 }
 \details{
 The vanishing threshold is used to define the active set:
-  K_ε(X) = {k : m_k(X) ∈ [ε_n, 1-ε_n]}
+\verb{K_ε(X) = \{k : m_k(X) ∈ [ε_n, 1-ε_n]\}}
 
 where m_k(X) = P(A_k = 1 | X) is the marginal propensity for treatment k.
 
-The threshold depends only on the sample size `n` and the user-chosen rate
-`gamma`. The asymptotic-normality theory (Corollary in the paper) requires
-`gamma > 1/(2(1+β))`, where β is the margin exponent of the data-generating
+The threshold depends only on the sample size \code{n} and the user-chosen rate
+\code{gamma}. The asymptotic-normality theory (Corollary in the paper) requires
+\code{gamma > 1/(2(1+β))}, where β is the margin exponent of the data-generating
 law — an object that is not estimable from data in practice. That condition
-governs the *asymptotic* guarantee, not whether the estimate is computable, so
+governs the \emph{asymptotic} guarantee, not whether the estimate is computable, so
 it is deliberately NOT enforced here: the estimator is well-defined for any
-valid `gamma`, and larger `gamma` (faster-vanishing threshold) is the practical
+valid \code{gamma}, and larger \code{gamma} (faster-vanishing threshold) is the practical
 knob a user controls.
 }
 \examples{
