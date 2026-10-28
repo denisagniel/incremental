@@ -50,6 +50,7 @@ to_numeric_matrix <- function(data, cols) {
   clean_mat <- matrix(unlist(mat_list, use.names = FALSE),
                       nrow = nrow(df),
                       ncol = length(mat_list))
+  colnames(clean_mat) <- names(df)
 
   # Ensure storage mode is double
   storage.mode(clean_mat) <- "double"
