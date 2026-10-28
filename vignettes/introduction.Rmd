@@ -203,8 +203,8 @@ p1 <- ggplot(comparison_long, aes(x = combination, y = probability, fill = distr
 
 print(p1)
 
-# Plot 2: Sensitivity analysis
-p2 <- ggplot(sens_result$summary, aes(x = delta_1, y = delta_2, size = abs(estimate), color = estimate)) +
+# Plot 2: Delta sweep
+p2 <- ggplot(sweep_result$summary, aes(x = delta_1, y = delta_2, size = abs(estimate), color = estimate)) +
   geom_point() +
   scale_color_gradient2(low = "blue", mid = "white", high = "red") +
   labs(title = "Sensitivity Analysis",
