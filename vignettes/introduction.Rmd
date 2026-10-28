@@ -1,0 +1,255 @@
+---
+title: "Introduction to Vector Incremental Treatment Effects"
+author: "Denis Agniel"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to Vector Incremental Treatment Effects}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5
+)
+```
+
+## Overview
+
+Vector incremental treatment effects extend the concept of incremental propensity score interventions to settings with multiple binary treatments. This vignette provides a gentle introduction to the methodology and demonstrates basic usage of the `incremental` package.
+
+## The Problem
+
+In many causal inference settings, we observe multiple binary treatments $A_1, A_2, \ldots, A_m$ rather than a single treatment. Standard causal inference methods face several challenges in this setting:
+
+1. **Positivity violations**: With $2^m$ possible treatment combinations, many combinations may never be observed
+2. **Interpretability**: It's unclear which of the $2^{2m-1}$ possible treatment contrasts are most relevant
+3. **Dimensionality**: Even enumerating all potential outcomes becomes difficult for moderate $m$
+
+## The Solution: Vector Incremental Treatment Effects
+
+Vector incremental treatment effects address these challenges by:
+
+1. **Defining interventions** that scale the odds of each treatment by a factor $\delta_k$
+2. **Finding the distribution** $Q_{\boldsymbol{\delta}}$ that is closest to the observed distribution $P_0$ while satisfying the marginal odds constraints
+3. **Estimating causal effects** using doubly-robust methods with efficient influence functions
+
+## Basic Usage
+
+### Generate Example Data
+
+```{r generate-data}
+library(incremental)
+
+# Generate data with 2 treatments and interactions
+set.seed(123)
+sim_data <- simulate_vector_treatment_data(
+  n = 1000,
+  m = 2,  # 2 treatments
+  p = 2,  # 2 covariates
+  treatment_effects = c(0.5, 0.3),
+  interaction_effects = matrix(c(0, 0.2, 0.2, 0), nrow = 2),
+  covariate_effects = c(0.3, 0.4),
+  noise_sd = 1.0
+)
+
+# Look at the data structure
+head(sim_data$data)
+```
+
+### Compute Q_delta Distribution
+
+```{r compute-qdelta}
+# Generate treatment combinations
+vectors <- generate_binary_vectors(2)
+
+# Define delta values (odds scaling factors)
+delta <- c(1.5, 2.0)  # 50% increase for A1, 100% increase for A2
+
+# Column specifications (the package requires explicit column names)
+treatment_cols <- paste0("A", 1:2)
+covariate_cols <- paste0("X", 1:2)
+
+# Estimate propensity scores
+ps_est <- estimate_propensity_scores(sim_data$data,
+                                     treatment_cols = treatment_cols,
+                                     covariate_cols = covariate_cols,
+                                     method = "glm")
+
+# Compute per-observation Q_delta using KL divergence
+qdelta_results <- vector("list", nrow(sim_data$data))
+for (i in 1:nrow(sim_data$data)) {
+  qdelta_results[[i]] <- compute_qdelta_per_obs(
+    ps_est$propensity_scores[i, ], delta, "kl"
+  )
+}
+
+# Example: Compare distributions for first observation
+first_obs_propensity <- ps_est$propensity_scores[1, ]
+first_obs_qdelta <- qdelta_results[[1]]$q_delta
+
+comparison <- data.frame(
+  combination = apply(vectors, 1, paste, collapse = ""),
+  p0 = first_obs_propensity,
+  qdelta = first_obs_qdelta
+)
+print(comparison)
+```
+
+### Estimate Causal Effects
+
+```{r estimate-effects}
+# Estimate counterfactual mean under incremental distribution
+result <- estimate_qdelta_mean(
+  sim_data$data,
+  delta = delta,
+  treatment_cols = treatment_cols,
+  covariate_cols = covariate_cols,
+  divergence = "kl",
+  estimator = "one_step"
+)
+
+# View results
+cat("Point estimate:", round(result$estimate, 4), "\n")
+cat("Standard error:", round(result$se, 4), "\n")
+cat("95% CI: [", round(result$ci_lower, 4), ", ", round(result$ci_upper, 4), "]\n")
+cat("P-value:", round(result$p_value, 4), "\n")
+```
+
+## Comparing Different Divergences
+
+The package supports multiple divergence measures. Let's compare them:
+
+```{r compare-divergences}
+# Test different divergences
+divergences <- c("kl", "reverse_kl", "chi2", "hellinger")
+results <- list()
+
+for (div in divergences) {
+  results[[div]] <- estimate_qdelta_mean(
+    sim_data$data,
+    delta = delta,
+    treatment_cols = treatment_cols,
+    covariate_cols = covariate_cols,
+    divergence = div,
+    estimator = "one_step"
+  )
+}
+
+# Compare estimates
+estimates <- sapply(results, function(x) x$estimate)
+ses <- sapply(results, function(x) x$se)
+
+comparison_df <- data.frame(
+  divergence = names(estimates),
+  estimate = estimates,
+  se = ses,
+  ci_lower = estimates - 1.96 * ses,
+  ci_upper = estimates + 1.96 * ses
+)
+
+print(comparison_df)
+```
+
+## Sensitivity Analysis
+
+We can examine how estimates change with different delta values:
+
+```{r sensitivity-analysis}
+# Define different delta scenarios
+delta_scenarios <- list(
+  "moderate" = c(1.2, 1.2),
+  "large" = c(1.5, 1.5),
+  "mixed" = c(1.2, 1.5),
+  "extreme" = c(2.0, 2.0)
+)
+
+# Run sensitivity analysis
+sens_result <- sensitivity_analysis(
+  sim_data$data,
+  delta_scenarios,
+  divergence = "kl"
+)
+
+# View results
+print(sens_result$summary)
+```
+
+## Visualization
+
+Let's create some visualizations to better understand the results:
+
+```{r visualization}
+library(ggplot2)
+
+# Plot 1: Distribution comparison
+comparison_long <- tidyr::pivot_longer(
+  comparison, 
+  cols = -combination, 
+  names_to = "distribution", 
+  values_to = "probability"
+)
+
+p1 <- ggplot(comparison_long, aes(x = combination, y = probability, fill = distribution)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Treatment Distribution Comparison",
+       x = "Treatment Combination", y = "Probability",
+       fill = "Distribution") +
+  theme_minimal()
+
+print(p1)
+
+# Plot 2: Sensitivity analysis
+p2 <- ggplot(sens_result$summary, aes(x = delta_1, y = delta_2, size = abs(estimate), color = estimate)) +
+  geom_point() +
+  scale_color_gradient2(low = "blue", mid = "white", high = "red") +
+  labs(title = "Sensitivity Analysis",
+       x = "Delta 1", y = "Delta 2", 
+       size = "|Estimate|", color = "Estimate") +
+  theme_minimal()
+
+print(p2)
+```
+
+## Key Features
+
+### 1. Multiple Divergence Measures
+
+The package supports several divergence measures:
+
+- **KL-divergence**: $D_{KL}(Q || P_0)$ - preserves support of $P_0$
+- **Reverse KL**: $D_{KL}(P_0 || Q)$ - may allow broader support
+- **χ²-divergence**: $D_{\chi^2}(Q || P_0)$ - penalizes large deviations
+- **Hellinger distance**: $D_H(Q || P_0)$ - symmetric divergence
+
+### 2. Doubly-Robust Estimation
+
+The package provides three estimation approaches:
+
+- **Plugin estimator**: Uses outcome regression only
+- **One-step estimator**: Adds EIF correction (recommended)
+- **TMLE**: Targeted maximum likelihood estimation
+
+### 3. Comprehensive Inference
+
+- Asymptotic confidence intervals using EIF variance
+- Bootstrap inference for complex settings
+- Hypothesis testing for treatment effects
+- Sensitivity analysis across delta values
+
+## Next Steps
+
+This vignette covered the basics of vector incremental treatment effects. For more advanced topics, see:
+
+- **Divergences vignette**: Detailed comparison of divergence measures
+- **Estimation vignette**: Advanced nuisance estimation strategies
+- **Simulations vignette**: Reproducing paper results
+
+## References
+
+- Kennedy, E. H. (2019). Nonparametric causal effects based on incremental propensity score interventions. *Journal of the American Statistical Association*, 114(526), 645-656.
+- Bonvini, M., Kennedy, E. H., & Ventura, L. (2023). Incremental propensity score interventions for continuous treatments. *Biometrics*, 79(1), 1-12.

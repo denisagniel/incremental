@@ -1,0 +1,8 @@
+^README\.Rmd$
+^\.github$
+^\.git$
+^\.gitignore$
+^\.Rproj\.user$
+^.*\.Rproj$
+^LICENSE\.md$
+^\.zenodo\.json$

@@ -1,0 +1,31 @@
+{
+  "title": "incremental: Vector Incremental Treatment Effects",
+  "description": "R package implementing vector incremental treatment effects for causal inference with multiple binary treatments. Provides doubly-robust estimation with efficient influence functions, support for multiple divergence measures (KL, reverse KL, f-divergences), and tools for sensitivity analysis. Accompanies the paper \"Vector incremental treatment effects.\"",
+  "upload_type": "software",
+  "license": "MIT",
+  "creators": [
+    {
+      "name": "Agniel, Denis",
+      "affiliation": "RAND Corporation",
+      "orcid": "0000-0003-1483-2724"
+    },
+    {
+      "name": "Rubinstein, Max",
+      "affiliation": "RAND Corporation"
+    }
+  ],
+  "keywords": [
+    "causal inference",
+    "incremental propensity score",
+    "doubly-robust estimation",
+    "efficient influence function",
+    "R package"
+  ],
+  "related_identifiers": [
+    {
+      "relation": "isSupplementTo",
+      "identifier": "https://github.com/denisagniel/incremental",
+      "resource_type": "software"
+    }
+  ]
+}

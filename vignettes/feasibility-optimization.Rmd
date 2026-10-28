@@ -1,0 +1,215 @@
+---
+title: "Finding Feasible Delta Values"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Finding Feasible Delta Values}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction
+
+When working with vector incremental treatment effects, not all delta values are feasible. A delta is **feasible** if there exists a distribution Q_delta that:
+
+1. Satisfies the marginal constraints: E_Q[A_k] = E_P[A_k] + delta_k
+2. Has support contained in the support of P(A|X)
+3. Is a valid probability distribution
+
+The `incremental` package provides optimization functions to find feasible deltas automatically, rather than requiring manual trial-and-error.
+
+## The Feasibility Problem
+
+For a given observation i with propensity scores p_i, the target marginals are:
+
+```
+target_k(delta) = delta_k * p_{i,k} / (1 + (delta_k - 1) * p_{i,k})
+```
+
+These target marginals must lie within the **marginal polytope** - the set of achievable marginals given the support of p_i.
+
+The global feasible region is the intersection of per-observation feasible sets across all n observations.
+
+## Quick Start: Maximum Uniform Delta
+
+The most common question: "What's the largest uniform delta (same for all treatments) I can use?"
+
+```{r eval=FALSE}
+library(incremental)
+
+# Estimate propensity scores (column names must be given explicitly)
+ps_est <- estimate_propensity_scores(
+  data,
+  treatment_cols = paste0("A", 1:m),
+  covariate_cols = grep("^X[0-9]+$", names(data), value = TRUE),
+  method = "glm"
+)
+
+# Find maximum uniform delta
+result <- find_max_uniform_delta(ps_est$propensity_scores)
+
+cat("Maximum uniform delta:", result$max_delta, "\n")
+# Use with safety margin
+delta <- rep(result$max_delta * 0.9, m)
+```
+
+## Per-Treatment Maximum
+
+To understand constraints on individual treatments:
+
+```{r eval=FALSE}
+# Find maximum for each treatment (others held at 1.0)
+result <- find_max_per_treatment_delta(ps_est$propensity_scores)
+
+for (k in 1:length(result$max_deltas)) {
+  cat("Treatment", k, ": max delta =", result$max_deltas[k], "\n")
+}
+
+# Identify most constrained treatment
+most_constrained <- which.min(result$max_deltas)
+```
+
+## Directional Search
+
+For more complex scenarios, search along any direction in R^m:
+
+```{r eval=FALSE}
+# Uniform direction (same as find_max_uniform_delta)
+result <- find_max_delta_in_direction(
+  ps_est$propensity_scores,
+  direction = rep(1, m)
+)
+
+# Single treatment k=3
+direction <- rep(0, m)
+direction[3] <- 1
+result <- find_max_delta_in_direction(
+  ps_est$propensity_scores,
+  direction = direction
+)
+
+# Trade-off: increase A1 twice as much as A2
+result <- find_max_delta_in_direction(
+  ps_est$propensity_scores,
+  direction = c(2, 1, rep(0, m-2))
+)
+
+# Resulting delta
+cat("Maximum delta:", result$max_delta, "\n")
+cat("(delta[1] / delta[2] =", result$max_delta[1] / result$max_delta[2], ")\n")
+```
+
+## Characterizing the Feasible Region
+
+For a comprehensive view of the feasible set:
+
+```{r eval=FALSE}
+# Compute axis-aligned bounding box
+bounds <- compute_feasible_bounds(ps_est$propensity_scores)
+
+cat("Feasible region (hyperrectangle):\n")
+for (k in 1:m) {
+  cat("  delta[", k, "] in [",
+      bounds$lower_bounds[k], ", ",
+      bounds$upper_bounds[k], "]\n", sep = "")
+}
+
+cat("\nUniform delta: [",
+    bounds$uniform_lower, ", ",
+    bounds$uniform_upper, "]\n", sep = "")
+```
+
+## Interpretation
+
+### Large Feasible Region
+If you find:
+- Max uniform delta > 2.0
+- Wide per-treatment ranges
+
+This indicates:
+- Good overlap in treatment probabilities
+- Sufficient support across treatment combinations
+- You have flexibility in choosing delta
+
+### Small Feasible Region
+If you find:
+- Max uniform delta < 1.5
+- Narrow per-treatment ranges
+- Some treatments much more constrained than others
+
+This indicates:
+- Limited overlap or sparse combinations
+- Need to be conservative with delta choices
+- Consider which treatments are most constrained
+
+## Recommendations
+
+**For applications:**
+
+1. Start by finding maximum uniform delta:
+   ```r
+   max_delta <- find_max_uniform_delta(propensity_scores)$max_delta
+   ```
+
+2. Use 80-90% of maximum for safety:
+   ```r
+   delta <- rep(max_delta * 0.85, m)
+   ```
+
+3. If uniform delta is too restrictive, check per-treatment bounds:
+   ```r
+   bounds <- compute_feasible_bounds(propensity_scores)
+   # Choose delta within these bounds
+   ```
+
+4. Validate your choice:
+   ```r
+   feasibility <- analyze_delta_feasibility_all_obs(propensity_scores, delta)
+   cat("Feasible for", feasibility$n_feasible, "out of", n, "observations\n")
+   ```
+
+**For simulations:**
+
+- Test a range of deltas from conservative to aggressive
+- Use `find_max_uniform_delta()` to determine upper bound
+- Sample uniformly or geometrically within [1.0, max_delta]
+
+## Technical Details
+
+### Algorithm
+
+All optimization functions use **binary search**:
+
+1. Initialize bounds [left, right] with left = 1.0 (no change)
+2. Test midpoint: is delta = mid feasible for all observations?
+3. If yes: left ← mid (try larger)
+4. If no: right ← mid (try smaller)
+5. Repeat until |right - left| < tolerance
+
+Typical convergence: 15-25 iterations for 3 decimal places.
+
+### Complexity
+
+- `find_max_uniform_delta()`: O(k × n × 2^m) where k ≈ 20 iterations
+- `find_max_per_treatment_delta()`: O(m × k × n × 2^m)
+- `find_max_delta_in_direction()`: O(k × n × 2^m)
+
+For m=8 (256 combinations), n=1000, these complete in seconds.
+
+### Limitations
+
+- Assumes delta >= 1 (increases only) - can be extended
+- Does not find vertices of feasible polytope (computationally expensive for large m)
+- Provides axis-aligned bounds, not full convex hull
+
+## See Also
+
+- `analyze_delta_feasibility_all_obs()` - test specific delta
+- `suggest_feasible_delta()` - find nearest feasible to a target
+- `check_delta_feasibility()` - single-observation feasibility check
