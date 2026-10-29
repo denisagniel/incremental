@@ -4,7 +4,10 @@
 #' distribution using the asymptotic variance from the efficient influence function.
 #'
 #' @param estimate Numeric, point estimate
-#' @param eif_values Numeric vector, efficient influence function values
+#' @param eif_values Numeric vector of efficient influence function values.
+#'   These are CENTERED internally before computing the variance, so either
+#'   the centered (`$centered_eif`) or uncentered (`$eif_values`) output of
+#'   `efficient_influence_function()` may be passed safely.
 #' @param confidence_level Numeric, confidence level (default 0.95)
 #' @param method Character, method for variance estimation ("asymptotic", "bootstrap")
 #' @return List containing:
@@ -39,8 +42,21 @@ inference_qdelta_mean <- function(estimate, eif_values, confidence_level = 0.95,
   }
   
   if (method == "asymptotic") {
-    # Asymptotic variance from EIF
-    eif_var <- mean(eif_values^2)
+    # Asymptotic variance of the one-step estimator: sigma^2 = E[(phi - psi)^2],
+    # estimated by the 1/n plug-in over the sample-mean-centered EIF. Center
+    # explicitly: mean(x^2) is NOT invariant to the mean, unlike var(). Passing
+    # uncentered EIF values (whose mean is psi, not 0) would otherwise inflate
+    # the variance by psi^2 and silently widen every interval -- this is a
+    # public-API hazard since efficient_influence_function() returns
+    # eif_values uncentered. We use mean(x^2) rather than var() (which would
+    # also be correct here) so this function's SE agrees exactly with every
+    # other EIF-based SE in the package (asserted by run_consistency_checks.R
+    # check B), not because centering removes the need for a Bessel
+    # correction -- centering at the SAMPLE mean is exactly when that
+    # correction would apply. The 1/n choice is a convention, and it is very
+    # slightly anti-conservative by sqrt((n-1)/n).
+    eif_centered <- eif_values - mean(eif_values)
+    eif_var <- mean(eif_centered^2)
     if (eif_var < .Machine$double.eps) {
       warning("EIF variance is effectively zero; standard error set to 0. ",
               "Confidence intervals may be degenerate.", call. = FALSE)
@@ -275,7 +291,7 @@ delta_sweep <- function(data, delta_grid, divergence = "kl",
       ci_upper[i] <- result$ci_upper
       p_values[i] <- result$p_value
     }, error = function(e) {
-      warning("sensitivity_analysis(): delta_grid[[", i, "]] = c(",
+      warning("delta_sweep(): delta_grid[[", i, "]] = c(",
               paste(delta_i, collapse = ", "), ") failed: ", conditionMessage(e),
               call. = FALSE)
       estimates[i] <<- NA

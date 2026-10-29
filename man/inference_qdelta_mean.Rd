@@ -14,7 +14,10 @@ inference_qdelta_mean(
 \arguments{
 \item{estimate}{Numeric, point estimate}
 
-\item{eif_values}{Numeric vector, efficient influence function values}
+\item{eif_values}{Numeric vector of efficient influence function values.
+These are CENTERED internally before computing the variance, so either
+the centered (\verb{$centered_eif}) or uncentered (\verb{$eif_values}) output of
+\code{efficient_influence_function()} may be passed safely.}
 
 \item{confidence_level}{Numeric, confidence level (default 0.95)}
 

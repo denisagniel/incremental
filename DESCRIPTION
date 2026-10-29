@@ -1,7 +1,7 @@
 Package: incremental
 Type: Package
 Title: Vector Incremental Treatment Effects
-Version: 0.1.1
+Version: 0.1.2
 Authors@R: c(
     person("Denis", "Agniel", email = "denis.agniel@rand.org", role = c("aut", "cre")),
     person("Max", "Rubinstein", email = "mrubinstein@rand.org", role = "ctb")
