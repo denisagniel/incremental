@@ -36,7 +36,8 @@ test_that("generate_binary_vectors is memoised and callers cannot corrupt the ca
 test_that("generate_binary_vectors rejects invalid and unsupported m", {
   expect_error(generate_binary_vectors(0), "positive integer")
   expect_error(generate_binary_vectors(2.5), "positive integer")
-  expect_error(generate_binary_vectors(25), "not supported")
+  expect_error(generate_binary_vectors(21), "not supported")
+  expect_error(generate_binary_vectors("3"), "positive integer")
 })
 
 test_that("compute_marginal_polytope matches the de-duplicating reference", {
@@ -295,4 +296,297 @@ test_that("a Q_delta solver failure aborts the stratified estimate instead of dr
   }
   skip_if(!is.function(estimate_qdelta_mean_stratified))
   expect_error(suppressWarnings(suppressMessages(run())), "Q_delta solver failed for observation")
+})
+
+test_that("pattern checkpoints are saved, reloaded on an identical rerun, and invalidated by a changed delta", {
+  set.seed(20261029)
+  n <- 500
+  d <- data.frame(elig_A1 = 1L, elig_A2 = rbinom(n, 1, 0.6), X1 = rnorm(n), X2 = rnorm(n), Y = rnorm(n))
+  d$A1 <- rbinom(n, 1, plogis(0.3 * d$X1))
+  d$A2 <- ifelse(d$elig_A2 == 1, rbinom(n, 1, plogis(0.2 * d$X2)), 0L)
+  ck <- withr::local_tempdir()
+  run <- function(delta) {
+    estimate_qdelta_mean_stratified(
+      d, delta = delta, covariate_cols = c("X1", "X2"), eligibility_cols = c("elig_A1", "elig_A2"),
+      outcome_col = "Y", min_stratum_size = 50, cross_fit = FALSE, verbose = FALSE,
+      pattern_checkpoint_dir = ck, pattern_checkpoint_tag = "total__d1.5")
+  }
+  expect_message(first <- suppressWarnings(run(c(1.5, 1.5))), "saved")
+  files <- list.files(ck, pattern = "\\.rds$")
+  expect_gte(length(files), 2L)
+  expect_false(any(grepl("\\.tmp$", list.files(ck))))
+  expect_message(second <- suppressWarnings(run(c(1.5, 1.5))), "reloaded from checkpoint")
+  expect_equal(second$estimate, first$estimate)
+  expect_equal(second$se, first$se)
+  expect_message(third <- suppressWarnings(run(c(1.2, 1.2))), "stale or unusable")
+  expect_false(isTRUE(all.equal(third$estimate, first$estimate)))
+})
+
+test_that("a permuted order with history-DEPENDENT conditionals matches a brute-force joint", {
+  # The previous test uses history-ignoring conditionals, which cannot expose a mismapping of the
+  # history bits. Here conditional k depends on the earlier treatments in fitted order, bit p-1 of the
+  # history index = value of fitted treatment p; the truth is built cell by cell in treatment_cols order.
+  set.seed(20261030)
+  m <- 4; n <- 6
+  order <- c(3, 1, 4, 2)
+  pc <- lapply(seq_len(m), function(k) matrix(runif(n * 2^(k - 1), 0.1, 0.9), n, 2^(k - 1)))
+  ps <- assemble_sequential_joint(pc, m, perm = order)
+  vectors <- reference_binary_vectors(m)            # rows in treatment_cols order, column 1 fastest
+  truth <- matrix(1, n, 2^m)
+  for (j in seq_len(2^m)) {
+    a <- vectors[j, ]
+    for (k in seq_len(m)) {
+      hist_idx <- if (k == 1) 0 else sum(a[order[seq_len(k - 1)]] * 2^(seq_len(k - 1) - 1))
+      p1 <- pc[[k]][, hist_idx + 1]
+      truth[, j] <- truth[, j] * if (a[order[k]] == 1) p1 else 1 - p1
+    }
+  }
+  expect_equal(ps, truth, tolerance = 1e-12)
+  expect_equal(rowSums(ps), rep(1, n), tolerance = 1e-12)
+})
+
+test_that("failure-rate edge cases: float boundary, reverse_kl, and the count is returned", {
+  ps <- c(0.4, 0.3, 0.2, 0.1)
+  e <- simpleError("did not converge")
+  # 0.29 * 100 is 28.999999999999996 in floating point: exactly 29 failures must still be tolerated
+  expect_warning(qdelta_fallback_or_stop(1, e, ps, c(1.5, 2), 29L, 100L, 0.29), "fallback")
+  expect_error(qdelta_fallback_or_stop(1, e, ps, c(1.5, 2), 30L, 100L, 0.29), "exceeded")
+  expect_error(suppressWarnings(qdelta_fallback_or_stop(1, e, ps, c(1.5, 2), 1L, 100L, 0.5, "reverse_kl")),
+               "reverse_kl")
+
+  set.seed(20261031)
+  n <- 120
+  d <- data.frame(A1 = rbinom(n, 1, 0.5), A2 = rbinom(n, 1, 0.4), X1 = rnorm(n), Y = rnorm(n))
+  original <- compute_qdelta_per_obs
+  calls <- 0L
+  fail_obs_3 <- function(ps, delta, divergence, ...) {
+    calls <<- calls + 1L
+    if (calls == 3L) stop("synthetic solver failure")
+    original(ps, delta, divergence, ...)
+  }
+  testthat::local_mocked_bindings(compute_qdelta_per_obs = fail_obs_3)
+  expect_warning(
+    res <- suppressMessages(estimate_qdelta_mean(d, delta = c(1.5, 1.5), treatment_cols = c("A1", "A2"),
+                                                 covariate_cols = "X1", outcome_col = "Y", cross_fit = FALSE,
+                                                 max_qdelta_failure_rate = 0.05)),
+    "fallback to P0 used for 1 of")
+  expect_identical(res$n_qdelta_fallback, 1L)
+})
+
+test_that("the vanishing-threshold estimator honours max_qdelta_failure_rate", {
+  set.seed(20261101)
+  n <- 150
+  d <- data.frame(A1 = rbinom(n, 1, 0.5), A2 = rbinom(n, 1, 0.4), X1 = rnorm(n), Y = rnorm(n))
+  original <- compute_qdelta_per_obs
+  calls <- 0L
+  failing <- function(ps, delta, divergence, ...) {
+    calls <<- calls + 1L
+    if (calls == 5L) stop("synthetic solver failure")
+    original(ps, delta, divergence, ...)
+  }
+  testthat::local_mocked_bindings(compute_qdelta_per_obs = failing)
+  run <- function(...) {
+    estimate_qdelta_vanishing_threshold(d, delta = c(1.5, 1.5), treatment_cols = c("A1", "A2"),
+                                        covariate_cols = "X1", outcome_col = "Y", cross_fit = FALSE, ...)
+  }
+  expect_error(suppressWarnings(suppressMessages(run())), "Q_delta solver failed for observation")
+  calls <- 0L
+  expect_warning(res <- suppressMessages(run(max_qdelta_failure_rate = 0.05)), "fallback to P0")
+  expect_true(is.finite(res$estimate))
+})
+
+test_that("treatment_order with a repeated column is rejected", {
+  expect_error(suppressWarnings(
+    estimate_propensity_scores(data.frame(A1 = c(0, 1, 0, 1), A2 = c(1, 1, 0, 0), X1 = 1:4, Y = 1:4),
+                               c("A1", "A2"), "X1", method = "sequential", binary_method = "glm",
+                               cross_fit = FALSE, treatment_order = c("A1", "A1"))),
+    "exactly once")
+})
+
+test_that("a pattern checkpoint is not reloaded when the outcome or covariates change but the row counts do not", {
+  set.seed(20261102)
+  n <- 500
+  d <- data.frame(elig_A1 = 1L, elig_A2 = rbinom(n, 1, 0.6), X1 = rnorm(n), X2 = rnorm(n), Y = rnorm(n))
+  d$A1 <- rbinom(n, 1, plogis(0.3 * d$X1))
+  d$A2 <- ifelse(d$elig_A2 == 1, rbinom(n, 1, plogis(0.2 * d$X2)), 0L)
+  ck <- withr::local_tempdir()
+  run <- function(dat) {
+    estimate_qdelta_mean_stratified(
+      dat, delta = c(1.5, 1.5), covariate_cols = c("X1", "X2"), eligibility_cols = c("elig_A1", "elig_A2"),
+      outcome_col = "Y", min_stratum_size = 50, cross_fit = FALSE, verbose = FALSE,
+      pattern_checkpoint_dir = ck, pattern_checkpoint_tag = "total__d1.5")
+  }
+  suppressMessages(suppressWarnings(run(d)))
+  d2 <- d; d2$Y <- d2$Y + 1                      # same n, same pattern sizes, different outcome
+  expect_message(suppressWarnings(run(d2)), "stale or unusable")
+  d3 <- d; d3$X2 <- rev(d3$X2)                   # a covariate changed
+  expect_message(suppressWarnings(run(d3)), "stale or unusable")
+  expect_message(suppressWarnings(run(d)), "stale or unusable")   # d2 and d3 overwrote the files; d is recomputed
+})
+
+test_that("stratified_contrast_vs_observed: observed-mean contrast needs no delta = 1 run and checks alignment", {
+  set.seed(20261103)
+  n <- 900
+  d <- data.frame(elig_A1 = 1L, elig_A2 = rbinom(n, 1, 0.6), X1 = rnorm(n), X2 = rnorm(n))
+  d$A1 <- rbinom(n, 1, plogis(0.3 * d$X1))
+  d$A2 <- ifelse(d$elig_A2 == 1, rbinom(n, 1, plogis(0.2 * d$X2)), 0L)
+  d$Y <- 1 + 0.8 * d$A1 + 0.5 * d$A2 + d$X1 + rnorm(n)
+  fit <- function(delta) suppressWarnings(suppressMessages(estimate_qdelta_mean_stratified(
+    d, delta = delta, covariate_cols = c("X1", "X2"), eligibility_cols = c("elig_A1", "elig_A2"),
+    outcome_col = "Y", min_stratum_size = 50, cross_fit = FALSE, verbose = FALSE)))
+  f2 <- fit(c(2, 2)); f1 <- fit(c(1, 1))
+  ct <- stratified_contrast_vs_observed(f2$pattern_contributions, d$Y)
+  # level identities: the observed side is the mean of Y over the included patients, the other side is the fit
+  expect_equal(ct$estimate_a, mean(d$Y), tolerance = 1e-10)
+  expect_equal(ct$estimate_b, f2$estimate, tolerance = 1e-10)
+  expect_equal(ct$estimate, f2$estimate - mean(d$Y), tolerance = 1e-10)
+  # a real delta = 1 run gives (up to nuisance noise) the same contrast
+  ct1 <- stratified_contrast(f1$pattern_contributions, f2$pattern_contributions)
+  expect_equal(ct$estimate, ct1$estimate, tolerance = 0.1)
+  # the no-shift contrast is about zero
+  zero <- stratified_contrast_vs_observed(f1$pattern_contributions, d$Y)
+  expect_lt(abs(zero$estimate), 1e-6)    # at delta = 1 the one-step estimate IS the observed mean
+  # the contrast SE is smaller than the SE of the level (it removes the outcome's own variance)
+  expect_lt(ct$se, f2$se)
+  # a misaligned or incomplete outcome vector is refused
+  expect_error(stratified_contrast_vs_observed(f2$pattern_contributions, rev(d$Y)[-1]), "one value per row")
+  # (a permutation of y with the right pattern sizes cannot be detected here; the applied script checks
+  # row alignment against the eligibility patterns before calling this)
+})
+
+test_that("skip_null_shift: unshifted patterns contribute the observed mean exactly and cost no estimation", {
+  set.seed(20261106)
+  n <- 800
+  d <- data.frame(elig_A1 = 1L, elig_A2 = rbinom(n, 1, 0.5), X1 = rnorm(n))
+  d$A1 <- rbinom(n, 1, plogis(0.3 * d$X1)); d$A2 <- ifelse(d$elig_A2 == 1, rbinom(n, 1, 0.4), 0L)
+  d$Y <- 1 + d$A1 + d$A2 + d$X1 + rnorm(n)
+  run <- function(delta, skip) suppressWarnings(suppressMessages(estimate_qdelta_mean_stratified(
+    d, delta = delta, covariate_cols = "X1", eligibility_cols = c("elig_A1", "elig_A2"), outcome_col = "Y",
+    min_stratum_size = 50, cross_fit = FALSE, verbose = FALSE, skip_null_shift = skip)))
+  # shift only A2: the pattern with only A1 eligible is a null shift
+  a <- run(c(1, 2), TRUE); b <- run(c(1, 2), FALSE)
+  pc <- a$pattern_contributions$patterns
+  only_a1 <- which(pc$n_eligible == 1)
+  expect_length(only_a1, 1L)
+  ids <- a$pattern_contributions$obs_pattern_id
+  y_pat <- d$Y[!is.na(ids) & ids == pc$pattern_id[only_a1]]
+  expect_equal(pc$estimate[only_a1], mean(y_pat), tolerance = 1e-12)
+  # the shifted pattern is unchanged, and the overall estimate agrees with the full machinery up to nuisance noise
+  expect_equal(a$pattern_contributions$patterns$estimate[-only_a1], b$pattern_contributions$patterns$estimate[-only_a1],
+               tolerance = 1e-10)
+  expect_equal(a$estimate, b$estimate, tolerance = 0.1)
+  # an all-ones delta: every pattern is skipped and the contrast against the observed mean is exactly 0
+  z <- run(c(1, 1), TRUE)
+  zc <- stratified_contrast_vs_observed(z$pattern_contributions, d$Y)
+  expect_equal(zc$estimate, 0, tolerance = 1e-10)
+  expect_equal(zc$se, 0, tolerance = 1e-8)
+  # the checkpoint signature separates skipped from full runs
+  ck <- withr::local_tempdir()
+  go <- function(skip) suppressWarnings(estimate_qdelta_mean_stratified(
+    d, delta = c(1, 2), covariate_cols = "X1", eligibility_cols = c("elig_A1", "elig_A2"), outcome_col = "Y",
+    min_stratum_size = 50, cross_fit = FALSE, verbose = FALSE, skip_null_shift = skip,
+    pattern_checkpoint_dir = ck, pattern_checkpoint_tag = "t"))
+  suppressMessages(go(TRUE))
+  expect_message(go(FALSE), "stale or unusable")
+})
+
+test_that("qdelta_memo: a second outcome reuses the Q_delta solves and gives identical results", {
+  set.seed(20261107)
+  n <- 700
+  d <- data.frame(elig_A1 = 1L, elig_A2 = rbinom(n, 1, 0.5), X1 = rnorm(n), X2 = rnorm(n))
+  d$A1 <- rbinom(n, 1, plogis(0.3 * d$X1)); d$A2 <- ifelse(d$elig_A2 == 1, rbinom(n, 1, 0.4), 0L)
+  d$Y1 <- 1 + d$A1 + d$X1 + rnorm(n); d$Y2 <- 5 - d$A2 + d$X2 + rnorm(n)
+  calls <- 0L
+  original <- compute_qdelta_per_obs
+  counting <- function(...) { calls <<- calls + 1L; original(...) }
+  testthat::local_mocked_bindings(compute_qdelta_per_obs = counting)
+  cache <- new_nuisance_cache(20260706L, tags = c("y1", "y2"))
+  run <- function(y, tag, memo) {
+    dd <- d; dd$Y <- d[[y]]
+    suppressWarnings(suppressMessages(estimate_qdelta_mean_stratified(
+      dd, delta = c(1.5, 1.5), covariate_cols = c("X1", "X2"), eligibility_cols = c("elig_A1", "elig_A2"),
+      outcome_col = "Y", min_stratum_size = 50, cross_fit = TRUE, n_folds = 3, verbose = FALSE,
+      nuisance_cache = cache, nuisance_tag = tag, qdelta_memo = memo)))
+  }
+  memo <- new.env()
+  a1 <- run("Y1", "y1", memo); n1 <- calls
+  a2 <- run("Y2", "y2", memo); n2 <- calls - n1
+  expect_gt(n1, 0L)
+  expect_identical(n2, 0L)                         # nothing re-solved for the second outcome
+  # identical to a run that solves everything itself (no memo, fresh cache with the same seeds)
+  cache <- new_nuisance_cache(20260706L, tags = c("y1", "y2"))
+  calls <- 0L
+  b1 <- run("Y1", "y1", NULL); b2 <- run("Y2", "y2", NULL)
+  expect_identical(a1$estimate, b1$estimate); expect_identical(a1$se, b1$se)
+  expect_identical(a2$estimate, b2$estimate); expect_identical(a2$se, b2$se)
+  expect_identical(a2$eif_values, b2$eif_values)
+  # a different delta does not hit the memo
+  before <- calls
+  dd <- d; dd$Y <- d$Y1
+  suppressWarnings(suppressMessages(estimate_qdelta_mean_stratified(
+    dd, delta = c(2, 2), covariate_cols = c("X1", "X2"), eligibility_cols = c("elig_A1", "elig_A2"),
+    outcome_col = "Y", min_stratum_size = 50, cross_fit = TRUE, n_folds = 3, verbose = FALSE,
+    nuisance_cache = cache, nuisance_tag = "y1", qdelta_memo = memo)))
+  expect_gt(calls, before)
+})
+
+test_that("the pattern-major grid reproduces the per-run stratified estimator exactly, and resumes from disk", {
+  set.seed(20261108)
+  n <- 900
+  d <- data.frame(elig_A1 = 1L, elig_A2 = rbinom(n, 1, 0.6), elig_A3 = rbinom(n, 1, 0.5),
+                  X1 = rnorm(n), X2 = rnorm(n))
+  d$A1 <- rbinom(n, 1, plogis(0.3 * d$X1))
+  d$A2 <- ifelse(d$elig_A2 == 1, rbinom(n, 1, plogis(0.2 * d$X2)), 0L)
+  d$A3 <- ifelse(d$elig_A3 == 1, rbinom(n, 1, 0.4), 0L)
+  d$Y_a <- 1 + d$A1 + d$X1 + rnorm(n); d$Y_b <- 5 - d$A2 + d$X2 + 0.5 * d$A3 + rnorm(n)
+  oc <- c(a = "Y_a", b = "Y_b")
+  deltas <- list(up = c(2, 2, 2), dom = c(1, 2, 1))
+  common <- list(covariate_cols = c("X1", "X2"), eligibility_cols = c("elig_A1", "elig_A2", "elig_A3"),
+                 min_stratum_size = 50, cross_fit = TRUE, n_folds = 3, ps_method = "sequential",
+                 binary_method = "glm", outcome_method = "glm")
+  ck <- withr::local_tempdir()
+  g <- suppressWarnings(suppressMessages(do.call(estimate_qdelta_stratified_grid, c(
+    list(data = d, outcome_cols = oc, deltas = deltas, seed_base = 20260706L, checkpoint_dir = ck, verbose = FALSE,
+         skip_null_shift = TRUE), common))))
+  expect_length(g$runs, 4L)
+  # the reference: the existing estimator, one run at a time, with a shared cache and the same seeds
+  cache <- new_nuisance_cache(20260706L, tags = names(oc))
+  for (nm in names(oc)) for (sc in names(deltas)) {
+    dd <- d; dd$Y <- d[[oc[[nm]]]]
+    ref <- suppressWarnings(suppressMessages(do.call(estimate_qdelta_mean_stratified, c(
+      list(data = dd, delta = deltas[[sc]], outcome_col = "Y", verbose = FALSE, nuisance_cache = cache,
+           nuisance_tag = nm, skip_null_shift = TRUE), common))))
+    got <- g$runs[[paste(nm, sc, sep = "__")]]
+    expect_true(got$success)
+    expect_identical(got$estimate, ref$estimate)
+    expect_identical(got$se, ref$se)
+    expect_identical(got$eif_values, ref$eif_values)
+    expect_identical(got$pattern_contributions$obs_eif, ref$pattern_contributions$obs_eif)
+  }
+  # resume: nothing is recomputed, results identical; a new scenario computes only itself
+  files <- list.files(ck, pattern = "^pattern_.*rds$")
+  expect_gte(length(files), 2L)
+  calls <- 0L
+  original <- compute_qdelta_per_obs
+  testthat::local_mocked_bindings(compute_qdelta_per_obs = function(...) { calls <<- calls + 1L; original(...) })
+  g2 <- suppressWarnings(suppressMessages(do.call(estimate_qdelta_stratified_grid, c(
+    list(data = d, outcome_cols = oc, deltas = deltas, seed_base = 20260706L, checkpoint_dir = ck, verbose = FALSE,
+         skip_null_shift = TRUE), common))))
+  expect_identical(calls, 0L)
+  expect_identical(g2$runs$a__up$estimate, g$runs$a__up$estimate)
+  g3 <- suppressWarnings(suppressMessages(do.call(estimate_qdelta_stratified_grid, c(
+    list(data = d, outcome_cols = oc, deltas = c(deltas, list(low = c(0.5, 0.5, 0.5))), seed_base = 20260706L,
+         checkpoint_dir = ck, verbose = FALSE, skip_null_shift = TRUE), common))))
+  expect_gt(calls, 0L)
+  expect_identical(g3$runs$a__up$estimate, g$runs$a__up$estimate)
+  expect_true(g3$runs$b__low$success)
+  # a changed outcome invalidates only the units that use it
+  d2 <- d; d2$Y_a <- d2$Y_a + 1
+  calls <- 0L
+  g4 <- suppressWarnings(suppressMessages(do.call(estimate_qdelta_stratified_grid, c(
+    list(data = d2, outcome_cols = oc, deltas = deltas, seed_base = 20260706L, checkpoint_dir = ck, verbose = FALSE,
+         skip_null_shift = TRUE), common))))
+  expect_gt(calls, 0L)
+  expect_identical(g4$runs$b__up$estimate, g$runs$b__up$estimate)
+  expect_false(identical(g4$runs$a__up$estimate, g$runs$a__up$estimate))
 })

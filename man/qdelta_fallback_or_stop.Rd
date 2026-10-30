@@ -4,7 +4,16 @@
 \alias{qdelta_fallback_or_stop}
 \title{Handle a failed per-observation Q_delta solve (internal)}
 \usage{
-qdelta_fallback_or_stop(i, e, ps_row, delta_i, n_fallback, n, max_failure_rate)
+qdelta_fallback_or_stop(
+  i,
+  e,
+  ps_row,
+  delta_i,
+  n_fallback,
+  n,
+  max_failure_rate,
+  divergence = NULL
+)
 }
 \arguments{
 \item{i}{Observation index.}
@@ -20,6 +29,8 @@ qdelta_fallback_or_stop(i, e, ps_row, delta_i, n_fallback, n, max_failure_rate)
 \item{n}{Integer, observations in this fit.}
 
 \item{max_failure_rate}{Numeric in \verb{[0, 1]}, from \code{max_qdelta_failure_rate}.}
+
+\item{divergence}{Divergence name; a tolerated failure is refused for \code{reverse_kl}.}
 }
 \value{
 A \code{compute_qdelta_per_obs()}-shaped list (only when the failure is tolerated).

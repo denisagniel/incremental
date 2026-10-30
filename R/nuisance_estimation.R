@@ -447,7 +447,7 @@ compute_joint_probabilities <- function(data, conditional_models, treatment_orde
   m <- length(treatment_order)
   perm <- match(treatment_order, treatment_cols)
   stopifnot("treatment_order must be a permutation of treatment_cols" =
-              !anyNA(perm) && length(perm) == length(treatment_cols))
+              !anyNA(perm) && length(perm) == length(treatment_cols) && !anyDuplicated(perm))
 
   # Cache predictions for each model under each unique conditioning
   # pred_cache[[k]] is a matrix: n x 2^(k-1), where each column is predictions
@@ -524,7 +524,7 @@ compute_joint_probabilities_cv <- function(data, conditional_models, treatment_o
   m <- length(treatment_order)
   perm <- match(treatment_order, treatment_cols)
   stopifnot("treatment_order must be a permutation of treatment_cols" =
-              !anyNA(perm) && length(perm) == length(treatment_cols))
+              !anyNA(perm) && length(perm) == length(treatment_cols) && !anyDuplicated(perm))
   n_combinations <- nrow(vectors)
   n_folds <- length(unique(fold_ids))
 
@@ -1135,7 +1135,7 @@ estimate_propensity_scores <- function(data, treatment_cols, covariate_cols,
       treatment_order <- treatment_cols
     } else {
       # Validate provided order
-      if (!all(treatment_order %in% treatment_cols) || length(treatment_order) != m) {
+      if (!all(treatment_order %in% treatment_cols) || length(treatment_order) != m || anyDuplicated(treatment_order) > 0) {
         stop("treatment_order must contain all treatment columns exactly once")
       }
     }

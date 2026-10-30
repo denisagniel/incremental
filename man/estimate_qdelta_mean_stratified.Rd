@@ -32,7 +32,11 @@ estimate_qdelta_mean_stratified(
   nuisance_cache = NULL,
   nuisance_tag = NULL,
   max_qdelta_failure_rate = 0,
-  qdelta_tol = NULL
+  qdelta_tol = NULL,
+  pattern_checkpoint_dir = NULL,
+  pattern_checkpoint_tag = NULL,
+  skip_null_shift = FALSE,
+  qdelta_memo = NULL
 )
 }
 \arguments{
@@ -149,6 +153,23 @@ estimator never falls back and always stops.}
 \code{NULL} (default) uses \code{QDELTA_TOLERANCE} for every sample size (it no longer relaxes above
 100,000 observations, which made the same stratum's estimate depend on whether it crossed that
 size).}
+
+\item{pattern_checkpoint_dir}{Directory or \code{NULL}. If given, each pattern's result is saved here as
+soon as it finishes (atomic write) and, on a rerun with an identical signature (pattern, delta,
+methods, tolerances, \code{pattern_checkpoint_tag}), reloaded instead of recomputed, so a crash loses at
+most the pattern in progress. A changed signature recomputes that pattern.}
+
+\item{pattern_checkpoint_tag}{Character label identifying the run (for example cost type and
+scenario) inside the signature and the file names; required with \code{pattern_checkpoint_dir}.}
+
+\item{skip_null_shift}{Logical. If \code{TRUE}, a pattern in which every eligible \code{delta} equals 1 is not
+estimated by the one-step machinery: its counterfactual mean is the observed pattern mean with
+influence function \code{Y - mean(Y)} (exact in theory; saves the nuisance fits and the Q_delta/EIF pass
+for domain-only shifts). Default \code{FALSE}.}
+
+\item{qdelta_memo}{Optional environment shared across calls (see \code{estimate_qdelta_mean()}): the
+Q_delta solves of a pattern are reused when the same propensity matrix and delta recur, for example
+for the next outcome. Clear it when the delta changes.}
 }
 \value{
 List with class "qdelta_stratified" containing:

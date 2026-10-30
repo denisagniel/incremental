@@ -370,6 +370,9 @@ compute_psi_delta <- function(data, delta, treatment_cols, covariate_cols,
 #'   with a warning. Default: 0 (strict mode: error if even one observation is infeasible).
 #'   Example: prob_infeasible = 0.05 allows up to 5% infeasible observations.
 #'
+#' @param qdelta_memo Optional environment. Reuses the feasibility check and Q_delta solves between calls with
+#'   the identical propensity matrix, delta, divergence and tolerance (for example one call per outcome).
+#'   Requires `prob_infeasible = 0`.
 #' @param max_qdelta_failure_rate Numeric in `[0, 1]`: the largest share of observations whose
 #'   Q_delta solve may fail and fall back to Q_delta = P0 (no shift for that observation, a bias
 #'   toward the null). Default `0`: the first failure stops the estimate with the observation index
@@ -557,7 +560,7 @@ estimate_qdelta_mean <- function(data, delta, treatment_cols, covariate_cols,
                                inactive_fraction = 0.5, min_active = 1,
                                contrast = c("absolute", "difference"),
                                prob_infeasible = 0, xgb_params = NULL,
-    max_qdelta_failure_rate = 0, qdelta_tol = NULL) {
+    max_qdelta_failure_rate = 0, qdelta_tol = NULL, qdelta_memo = NULL) {
 
   # Match arguments
   threshold_type <- match.arg(threshold_type)
@@ -731,10 +734,29 @@ estimate_qdelta_mean <- function(data, delta, treatment_cols, covariate_cols,
   # Use early stopping only if prob_infeasible == 0 (strict mode)
   use_early_stop <- (prob_infeasible == 0)
 
-  feasibility_analysis <- analyze_delta_feasibility_all_obs(
-    ps_est$propensity_scores, delta,
-    early_stop = use_early_stop
-  )
+  # Outcome-free work shared across outcomes (optional): the feasibility check and the per-observation
+  # Q_delta solves depend only on the propensity matrix, delta, divergence and tolerance, not on the
+  # outcome. With a `qdelta_memo` environment, a second call with the identical inputs (for example the
+  # next cost type for the same pattern and delta) reuses them. Strict mode only (nothing is filtered),
+  # and the key hashes the propensity matrix itself, so a different matrix can never hit.
+  memo_hit <- NULL
+  memo_key <- NULL
+  if (!is.null(qdelta_memo)) {
+    if (prob_infeasible != 0) stop("`qdelta_memo` requires prob_infeasible = 0 (strict feasibility).", call. = FALSE)
+    memo_key <- rlang::hash(list(ps_est$propensity_scores, as.numeric(delta), divergence,
+                                 resolve_qdelta_tol(qdelta_tol),
+                                 resolve_max_failure_rate(max_qdelta_failure_rate)))
+    memo_hit <- qdelta_memo[[memo_key]]
+  }
+
+  feasibility_analysis <- if (!is.null(memo_hit)) {
+    list(n_feasible = nrow(data), feasible_per_obs = rep(TRUE, nrow(data)))   # checked when first computed
+  } else {
+    analyze_delta_feasibility_all_obs(
+      ps_est$propensity_scores, delta,
+      early_stop = use_early_stop
+    )
+  }
 
   # Track infeasible observations for filtering
   feasible_obs <- NULL
@@ -843,7 +865,7 @@ Results will be based on %d observations instead of %d.",
   start_time <- Sys.time()
   timeout_seconds <- QDELTA_DEFAULT_TIMEOUT_SECS  # 5 minutes per observation
 
-  for (i in 1:nrow(data)) {
+  for (i in seq_len(if (is.null(memo_hit)) nrow(data) else 0L)) {
 
     # Progress reporting
     if (i %% report_interval == 0) {
@@ -874,12 +896,21 @@ Results will be based on %d observations instead of %d.",
     }, error = function(e) {
       n_fallback <<- n_fallback + 1L
       qdelta_fallback_or_stop(i, e, ps_est$propensity_scores[i, ], delta,
-                              n_fallback, nrow(data), max_failure_rate)
+                              n_fallback, nrow(data), max_failure_rate, divergence)
     })
 
     qdelta_results[[i]] <- qdelta_result_i
     convergence_info$converged[i] <- qdelta_result_i$converged
     convergence_info$iterations[i] <- qdelta_result_i$iterations
+  }
+
+  if (!is.null(memo_hit)) {
+    qdelta_results <- memo_hit$qdelta_results
+    convergence_info <- memo_hit$convergence_info
+    n_fallback <- memo_hit$n_fallback
+  } else if (!is.null(qdelta_memo)) {
+    qdelta_memo[[memo_key]] <- list(qdelta_results = qdelta_results, convergence_info = convergence_info,
+                                    n_fallback = n_fallback)
   }
 
   if (n_fallback > 0L) {
@@ -1106,6 +1137,7 @@ Results will be based on %d observations instead of %d.",
     qdelta_results = qdelta_results,
     convergence_info = convergence_info,
     convergence_summary = convergence_summary,
+    n_qdelta_fallback = n_fallback,
     nuisance_estimates = list(
       propensity_scores = ps_est,
       outcome_models = outcome_est
@@ -1429,7 +1461,7 @@ estimate_pattern_effect <- function(data, pattern_info, delta,
                                     verbose = TRUE, xgb_params = NULL,
                                     nuisance_cache = NULL, nuisance_tag = NULL,
                                     pattern_pos = NULL,
-    max_qdelta_failure_rate = 0, qdelta_tol = NULL) {
+    max_qdelta_failure_rate = 0, qdelta_tol = NULL, skip_null_shift = FALSE, qdelta_memo = NULL) {
 
   threshold_type <- match.arg(threshold_type)
   n_full <- nrow(data)
@@ -1569,6 +1601,31 @@ estimate_pattern_effect <- function(data, pattern_info, delta,
     cross_fit_k <- FALSE
   }
 
+  # Null shift (every eligible delta in this pattern equals 1, for example a domain-only scenario in a
+  # pattern with no measure of that domain): the counterfactual mean IS the observed mean, with the
+  # sample mean as its efficient estimator and Y - mean(Y) as its influence function. Skipping the
+  # nuisance fits and the Q_delta/EIF pass is exact in theory, not an approximation; it is opt-in
+  # because it replaces the one-step estimate (which differs from the mean only by nuisance noise).
+  if (skip_null_shift && all(delta_k == 1)) {
+    y_k <- data_k_renamed[[outcome_col]]
+    est_k <- mean(y_k)
+    return(list(
+      success = TRUE,
+      estimate = est_k,
+      se = stats::sd(y_k) / sqrt(length(y_k)),
+      eif_values_extended = extend_eif_to_full(eif_reduced = y_k - est_k, indices_in_full = obs_indices,
+                                               n_full = n_full),
+      obs_indices = obs_indices,
+      n_obs = nrow(data_k_renamed),
+      n_eligible = m_k,
+      treatment_mapping = treatment_mapping,
+      convergence_summary = NULL,
+      n_qdelta_fallback = 0L,
+      null_shift = TRUE,
+      error_message = NA
+    ))
+  }
+
   # Estimate within this pattern.
   # NOTE: the nuisance fetch/fit lives INSIDE this tryCatch so that a nuisance
   # failure is reported as a pattern failure (as before) rather than aborting the
@@ -1620,7 +1677,8 @@ estimate_pattern_effect <- function(data, pattern_info, delta,
         bootstrap = FALSE,
         xgb_params = xgb_params,
         max_qdelta_failure_rate = max_qdelta_failure_rate,
-        qdelta_tol = qdelta_tol
+        qdelta_tol = qdelta_tol,
+        qdelta_memo = qdelta_memo
       )
     }
 
@@ -1724,6 +1782,7 @@ estimate_pattern_effect <- function(data, pattern_info, delta,
     n_eligible = m_k,
     treatment_mapping = treatment_mapping,
     convergence_summary = result_k$convergence_summary,
+    n_qdelta_fallback = if (is.null(result_k$n_qdelta_fallback)) 0L else result_k$n_qdelta_fallback,
     error_message = NA
   ))
 }
@@ -2157,6 +2216,47 @@ stratified_contrast <- function(contributions_a, contributions_b,
   )
 }
 
+#' Contrast of a stratified fit against the observed mean (no re-estimation)
+#'
+#' @description
+#' Difference \eqn{\hat\psi(\delta) - \bar Y} between the stratified counterfactual mean and the
+#' observed mean outcome of the SAME included patients, with the standard error from the influence
+#' function of the difference, \eqn{\mathrm{IF}_\delta - (Y - \bar Y)}. This is the
+#' observation-level counterpart of \code{contrast = "difference"} in \code{estimate_qdelta_mean()}
+#' and needs no \eqn{\delta = 1} run: the no-shift functional is \eqn{E[Y]}, whose efficient
+#' influence function is \eqn{Y - E[Y]}. It is implemented by building the "no shift" contributions
+#' object (pattern means as estimates, \eqn{Y} as the influence value) and passing both to
+#' \code{stratified_contrast()}, so the pooled stratified influence function is used throughout.
+#'
+#' @param contributions \code{pattern_contributions} from a stratified fit.
+#' @param y Numeric vector of the outcomes of the rows that fit used, in the SAME order (length
+#'   \code{contributions$n_full}). Only the length and the pattern sizes can be checked here, so a
+#'   permuted \code{y} with the right pattern sizes is NOT detected: align rows by construction.
+#' @inheritParams stratified_contrast
+#' @return As \code{stratified_contrast()}; \code{estimate_a} is the observed mean of the included
+#'   patients and \code{estimate_b} the counterfactual mean.
+#' @seealso \code{\link{stratified_contrast}}
+#' @export
+stratified_contrast_vs_observed <- function(contributions, y, min_stratum_size = 0,
+                                            include_patterns = NULL, confidence_level = 0.95) {
+  if (!is.numeric(y) || length(y) != contributions$n_full || anyNA(y)) {
+    stop("`y` must be a complete numeric vector with one value per row of the fit (n_full = ",
+         contributions$n_full, ").")
+  }
+  pats <- contributions$patterns
+  id <- as.integer(contributions$obs_pattern_id)
+  n_by_id <- tabulate(match(id, pats$pattern_id), nbins = nrow(pats))
+  if (!identical(as.integer(n_by_id), as.integer(pats$n_obs))) {
+    stop("`y` does not line up with the fit: pattern sizes implied by obs_pattern_id differ from the ",
+         "fit's n_obs. Use the rows in the order the estimator saw them.")
+  }
+  observed <- contributions
+  observed$patterns$estimate <- as.numeric(tapply(y, factor(id, levels = pats$pattern_id), mean))
+  observed$obs_eif <- as.numeric(y)
+  stratified_contrast(observed, contributions, min_stratum_size = min_stratum_size,
+                      include_patterns = include_patterns, confidence_level = confidence_level)
+}
+
 #' Estimate counterfactual mean with eligibility stratification
 #'
 #' @description
@@ -2282,6 +2382,20 @@ stratified_contrast <- function(contributions_a, contributions_b,
 #'   \item{m}{Integer, number of treatments}
 #' }
 #'
+#' @param pattern_checkpoint_dir Directory or `NULL`. If given, each pattern's result is saved here as
+#'   soon as it finishes (atomic write) and, on a rerun with an identical signature (pattern, delta,
+#'   methods, tolerances, `pattern_checkpoint_tag`), reloaded instead of recomputed, so a crash loses at
+#'   most the pattern in progress. A changed signature recomputes that pattern.
+#' @param pattern_checkpoint_tag Character label identifying the run (for example cost type and
+#'   scenario) inside the signature and the file names; required with `pattern_checkpoint_dir`.
+#' @param qdelta_memo Optional environment shared across calls (see `estimate_qdelta_mean()`): the
+#'   Q_delta solves of a pattern are reused when the same propensity matrix and delta recur, for example
+#'   for the next outcome. Clear it when the delta changes.
+#' @param skip_null_shift Logical. If `TRUE`, a pattern in which every eligible `delta` equals 1 is not
+#'   estimated by the one-step machinery: its counterfactual mean is the observed pattern mean with
+#'   influence function `Y - mean(Y)` (exact in theory; saves the nuisance fits and the Q_delta/EIF pass
+#'   for domain-only shifts). Default `FALSE`.
+#'
 #' @details
 #' **Workflow:**
 #' 1. Identifies unique eligibility patterns in the data
@@ -2392,9 +2506,15 @@ estimate_qdelta_mean_stratified <- function(data, delta,
                                            xgb_params = NULL,
                                            nuisance_cache = NULL,
                                            nuisance_tag = NULL,
-    max_qdelta_failure_rate = 0, qdelta_tol = NULL) {
+    max_qdelta_failure_rate = 0, qdelta_tol = NULL,
+    pattern_checkpoint_dir = NULL, pattern_checkpoint_tag = NULL, skip_null_shift = FALSE,
+    qdelta_memo = NULL) {
 
   threshold_type <- match.arg(threshold_type)
+
+  if (!is.null(pattern_checkpoint_dir) && is.null(pattern_checkpoint_tag)) {
+    stop("pattern_checkpoint_dir needs pattern_checkpoint_tag")
+  }
 
   # Nuisance-fit cache: validate here too so the failure is immediate and names
   # this function, instead of surfacing from the first pattern.
@@ -2529,7 +2649,52 @@ estimate_qdelta_mean_stratified <- function(data, delta,
                      pattern_i$n_obs, 100 * pattern_i$prevalence, pattern_i$n_eligible))
     }
 
-    pattern_results[[i]] <- estimate_pattern_effect(
+    # Pattern-level checkpoint: reload an identical, successful earlier result; otherwise compute
+    # below and save it as soon as it finishes (a crash then loses at most this pattern).
+    ck_file <- NULL
+    ck_sig <- NULL
+    reloaded <- FALSE
+    if (!is.null(pattern_checkpoint_dir)) {
+      # Everything that can change this pattern's numbers: the settings, the exact data rows and columns it
+      # uses (hashed), the package version and the nuisance-cache seed. (The calling script also keys the
+      # checkpoint DIRECTORY on data/code/seed fingerprints; this is the in-package guard.)
+      a_cols <- grep("^A[0-9]+$", names(data), value = TRUE)
+      ck_sig <- list(
+        version = 2L, tag = pattern_checkpoint_tag, pattern = pattern_i$pattern_string,
+        n_obs = pattern_i$n_obs, n_full = nrow(data), delta = delta, divergence = divergence,
+        estimator = estimator, ps_method = ps_method, binary_method = binary_method,
+        outcome_method = outcome_method, cross_fit = cross_fit, n_folds = n_folds,
+        threshold_type = threshold_type, gamma = gamma, epsilon = epsilon,
+        qdelta_tol = resolve_qdelta_tol(qdelta_tol),
+        max_qdelta_failure_rate = max_qdelta_failure_rate, nuisance_tag = nuisance_tag,
+        covariate_cols = covariate_cols, outcome_col = outcome_col, xgb_params = xgb_params,
+        skip_null_shift = skip_null_shift,
+        package_version = as.character(utils::packageVersion("incremental")),
+        cache_seed_base = if (is.null(nuisance_cache)) NA_integer_ else nuisance_cache$seed_base,
+        data_md5 = rlang::hash(data[pattern_i$obs_indices, c(covariate_cols, outcome_col, a_cols), drop = FALSE])
+      )
+      fs::dir_create(pattern_checkpoint_dir)
+      ck_file <- file.path(
+        pattern_checkpoint_dir,
+        sprintf("%s__pattern_%04d.rds", gsub("[^A-Za-z0-9._-]", "_", pattern_checkpoint_tag), i)
+      )
+      if (file.exists(ck_file)) {
+        ck <- tryCatch(readRDS(ck_file), error = function(e) NULL)
+        if (is.list(ck) && identical(ck$signature, ck_sig) && isTRUE(ck$result$success)) {
+          pattern_results[i] <- list(ck$result)
+          reloaded <- TRUE
+          message(sprintf("  [%s] pattern %d/%d (n=%d, %d eligible): reloaded from checkpoint",
+                          pattern_checkpoint_tag, i, n_patterns_to_estimate, pattern_i$n_obs,
+                          pattern_i$n_eligible))
+        } else {
+          message(sprintf("  [%s] pattern %d/%d: saved result is stale or unusable; recomputing",
+                          pattern_checkpoint_tag, i, n_patterns_to_estimate))
+        }
+      }
+    }
+    pattern_t0 <- Sys.time()
+
+    if (!reloaded) pattern_results[[i]] <- estimate_pattern_effect(
       data = data,
       pattern_info = pattern_i,
       delta = delta,
@@ -2551,8 +2716,24 @@ estimate_qdelta_mean_stratified <- function(data, delta,
       nuisance_tag = nuisance_tag,
       pattern_pos = i,
       max_qdelta_failure_rate = max_qdelta_failure_rate,
-      qdelta_tol = qdelta_tol
+      qdelta_tol = qdelta_tol,
+      skip_null_shift = skip_null_shift,
+      qdelta_memo = qdelta_memo
     )
+
+    if (!is.null(ck_file) && !reloaded && isTRUE(pattern_results[[i]]$success)) {
+      tmp <- paste0(ck_file, ".", Sys.getpid(), ".tmp")
+      saveRDS(list(signature = ck_sig, result = pattern_results[[i]]), tmp)
+      # replace atomically (a half-written file is never read as a checkpoint); a failed replace is an
+      # error, not a message saying "saved"
+      replaced <- suppressWarnings(file.rename(tmp, ck_file)) || isTRUE(file.copy(tmp, ck_file, overwrite = TRUE))
+      unlink(tmp)
+      if (!replaced) stop("could not write the pattern checkpoint ", ck_file, call. = FALSE)
+      message(sprintf("  [%s] pattern %d/%d (n=%d, %d eligible): %.0f s, saved",
+                      pattern_checkpoint_tag, i, n_patterns_to_estimate, pattern_i$n_obs,
+                      pattern_i$n_eligible,
+                      as.numeric(difftime(Sys.time(), pattern_t0, units = "secs"))))
+    }
 
     if (!pattern_results[[i]]$success) {
       warning(sprintf("Pattern %d ('%s') estimation failed: %s",
@@ -2655,6 +2836,10 @@ estimate_qdelta_mean_stratified <- function(data, delta,
     coverage = aggregated_results$coverage,
     realized_coverage = realized_coverage,
     n_patterns_failed = sum(!succeeded),
+    # observations whose Q_delta solve failed and fell back to P0 (0 unless max_qdelta_failure_rate > 0)
+    n_qdelta_fallback = sum(vapply(pattern_results[succeeded], function(x) {
+      if (is.null(x$n_qdelta_fallback)) 0L else as.integer(x$n_qdelta_fallback)
+    }, integer(1))),
     pattern_contributions = aggregated_results$pattern_contributions,
     nuisance_timing = nuisance_timing,
     delta = delta,
@@ -2882,6 +3067,8 @@ estimate_qdelta_vanishing_threshold <- function(data, delta,
 
   # One tolerance for every sample size (see qdelta_tol)
   adaptive_tol <- resolve_qdelta_tol(qdelta_tol)
+  n_fallback <- 0L
+  max_failure_rate <- resolve_max_failure_rate(max_qdelta_failure_rate)
 
   # Progress reporting for large datasets
   report_interval <- if (n > QDELTA_LARGE_N_THRESHOLD) 10000 else Inf
@@ -2897,9 +3084,18 @@ estimate_qdelta_vanishing_threshold <- function(data, delta,
                      i, n, pct, rate, remaining / 60))
     }
 
-    qdelta_results[[i]] <- compute_qdelta_per_obs(
-      ps_est$propensity_scores[i, ], delta, divergence, tol = adaptive_tol
+    qdelta_results[[i]] <- tryCatch(
+      compute_qdelta_per_obs(ps_est$propensity_scores[i, ], delta, divergence, tol = adaptive_tol),
+      error = function(e) {
+        n_fallback <<- n_fallback + 1L
+        qdelta_fallback_or_stop(i, e, ps_est$propensity_scores[i, ], delta, n_fallback, n,
+                                max_failure_rate, divergence)
+      }
     )
+  }
+  if (n_fallback > 0L) {
+    warning(sprintf("Q_delta fallback to P0 used for %d of %d observations (max_qdelta_failure_rate = %g).",
+                    n_fallback, n, max_failure_rate), call. = FALSE)
   }
 
   # Compute EIF with active sets (key difference from standard estimator)
@@ -3253,7 +3449,7 @@ estimate_qdelta_adaptive <- function(data, delta,
       error = function(e) {
         n_fallback <<- n_fallback + 1L
         qdelta_fallback_or_stop(i, e, ps_est$propensity_scores[i, ], delta_adaptive[i, ],
-                                n_fallback, n, max_failure_rate)
+                                n_fallback, n, max_failure_rate, divergence)
       }
     )
   }
@@ -3393,10 +3589,13 @@ resolve_max_failure_rate <- function(max_qdelta_failure_rate = 0) {
 #' @param n_fallback Integer, failures so far including this one.
 #' @param n Integer, observations in this fit.
 #' @param max_failure_rate Numeric in `[0, 1]`, from `max_qdelta_failure_rate`.
+#' @param divergence Divergence name; a tolerated failure is refused for `reverse_kl`.
 #' @return A `compute_qdelta_per_obs()`-shaped list (only when the failure is tolerated).
 #' @keywords internal
-qdelta_fallback_or_stop <- function(i, e, ps_row, delta_i, n_fallback, n, max_failure_rate) {
-  if (n_fallback > max_failure_rate * n) {
+qdelta_fallback_or_stop <- function(i, e, ps_row, delta_i, n_fallback, n, max_failure_rate,
+                                    divergence = NULL) {
+  # 1e-9 guards the float edge: 0.29 * 100 is 28.999999999999996, which would stop at exactly 29 failures
+  if (n_fallback > floor(max_failure_rate * n + 1e-9)) {
     msg <- if (max_failure_rate == 0) {
       sprintf(paste0("Q_delta solver failed for observation %d: %s\n",
                      "Set max_qdelta_failure_rate > 0 to tolerate failures (each falls back to ",
@@ -3411,6 +3610,10 @@ qdelta_fallback_or_stop <- function(i, e, ps_row, delta_i, n_fallback, n, max_fa
     # and dropping the pattern from the stratified estimate.
     stop(structure(class = c("qdelta_solver_failure", "error", "condition"),
                    list(message = msg, call = NULL)))
+  }
+  if (identical(divergence, "reverse_kl")) {
+    # lambda = 0 (Q = P0) is the fallback; for reverse KL the divergence is undefined at P0
+    stop("max_qdelta_failure_rate > 0 is not supported with divergence = 'reverse_kl'; Q = P0 is not a valid fallback")
   }
   warning(sprintf("Observation %d failed with error: %s. Using fallback (P0).",
                   i, conditionMessage(e)), call. = FALSE)

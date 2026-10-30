@@ -1,3 +1,29 @@
+# incremental 0.1.3
+
+## New features
+
+* `estimate_qdelta_stratified_grid()` estimates eligibility-stratified effects
+  pattern by pattern across a grid of deltas and outcomes, reusing nuisance fits
+  and checkpointing completed patterns.
+* `stratified_contrast_vs_observed()` contrasts a stratified fit with the
+  observed mean without re-estimation.
+* `estimate_qdelta_mean()` gains `qdelta_memo`, an environment that reuses the
+  feasibility check and Q_delta solves across calls with identical propensity
+  matrix, delta, divergence and tolerance (e.g. one call per outcome).
+* `estimate_qdelta_mean_stratified()` gains `skip_null_shift` (opt-in): when every
+  eligible delta in a pattern equals 1, return the sample mean and its influence
+  function exactly, skipping nuisance fits.
+* Stratified fits report `n_qdelta_fallback`.
+
+## Fixes
+
+* A duplicated `treatment_order` is now rejected rather than silently
+  mis-evaluating the joint treatment distribution.
+* `generate_binary_vectors()` validates `m` (positive integer scalar) and is
+  limited to `m <= 20` (2^24 x 24 doubles would be about 3 GB).
+* The feasibility shortcut no longer accepts targets within tolerance of the
+  boundary; they fall through to the LP as before.
+
 # incremental 0.1.2
 
 ## Breaking changes

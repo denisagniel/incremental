@@ -13,10 +13,10 @@ generate_binary_vectors <- local({
   # Memoised by m: the matrix is a plain value (copy-on-modify), so sharing is safe, and several
   # per-observation loops previously rebuilt it for every observation.
   cache <- new.env(parent = emptyenv())
-  max_m <- 24L  # 2^24 x 24 doubles is already 3 GB; larger m cannot be held densely
+  max_m <- 20L  # 2^20 x 20 doubles is 168 MB (2^24 would be 3 GB and stay cached for the whole session)
 
   function(m) {
-    if (m <= 0 || m != as.integer(m)) {
+    if (!is.numeric(m) || length(m) != 1L || is.na(m) || m <= 0 || m != as.integer(m)) {
       stop("m must be a positive integer")
     }
     if (m > max_m) {
@@ -170,7 +170,8 @@ check_delta_feasibility <- function(delta, p0_marginals, support_matrix, tol = 1
   # is feasible and no LP over 2^m vertices is needed. The LP's weights (and the "distance" taken
   # from them) were an arbitrary basic solution; the distance reported here is the margin to the
   # cube's boundary, which is what the field is documented to mean.
-  if (all(support_matrix)) {
+  # A target within `tol` of the boundary is NOT taken here: it falls through to the LP, as before.
+  if (all(support_matrix) && min(target_marginals, 1 - target_marginals) > tol) {
     return(list(
       feasible = TRUE,
       target_marginals = target_marginals,

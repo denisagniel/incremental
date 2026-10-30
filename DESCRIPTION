@@ -1,7 +1,7 @@
 Package: incremental
 Type: Package
 Title: Vector Incremental Treatment Effects
-Version: 0.1.2
+Version: 0.1.3
 Authors@R: c(
     person("Denis", "Agniel", email = "denis.agniel@rand.org", role = c("aut", "cre")),
     person("Max", "Rubinstein", email = "mrubinstein@rand.org", role = "ctb")
@@ -35,7 +35,8 @@ Imports:
     MASS,
     lpSolve,
     parallel,
-    nnet
+    nnet,
+    rlang
 Suggests:
     testthat (>= 3.0.0),
     knitr,

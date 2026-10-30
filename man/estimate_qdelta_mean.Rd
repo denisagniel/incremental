@@ -32,7 +32,8 @@ estimate_qdelta_mean(
   prob_infeasible = 0,
   xgb_params = NULL,
   max_qdelta_failure_rate = 0,
-  qdelta_tol = NULL
+  qdelta_tol = NULL,
+  qdelta_memo = NULL
 )
 }
 \arguments{
@@ -155,6 +156,10 @@ estimator never falls back and always stops.}
 \code{NULL} (default) uses \code{QDELTA_TOLERANCE} for every sample size (it no longer relaxes above
 100,000 observations, which made the same stratum's estimate depend on whether it crossed that
 size).}
+
+\item{qdelta_memo}{Optional environment. Reuses the feasibility check and Q_delta solves between calls with
+the identical propensity matrix, delta, divergence and tolerance (for example one call per outcome).
+Requires \code{prob_infeasible = 0}.}
 }
 \value{
 List containing:

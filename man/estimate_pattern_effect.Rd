@@ -26,7 +26,9 @@ estimate_pattern_effect(
   nuisance_tag = NULL,
   pattern_pos = NULL,
   max_qdelta_failure_rate = 0,
-  qdelta_tol = NULL
+  qdelta_tol = NULL,
+  skip_null_shift = FALSE,
+  qdelta_memo = NULL
 )
 }
 \arguments{
